@@ -1,7 +1,7 @@
 
-#include "matrix.h"
+#include <fstream>
 
-using namespace linalg;
+#include "matrix.h"
 
 Matrix::Matrix(const char *file)
 {
@@ -12,54 +12,46 @@ Matrix::Matrix(const Matrix &copy) :
   num_rows(copy.num_rows),
   num_cols(copy.num_cols)
 {
-  this->base = new double[this->num_rows];
+  this->flat = cudaMallocManaged(&flat, sizeof(double) * copy.num_rows * copy.num_cols);
   for (int i = 0; i < this->num_rows; ++i)
   {
-    this->base[i] = new double[this->num_cols];
     for (int j = 0; j < this->num_cols; ++j)
     {
-      this->base[i][j] = other.base[i][j];
+      this->flat[i * copy.num_cols + j] = copy.flat[i * copy.num_cols + j];
     }
   }
 }
 
-Matrix::Matrix(void) { }
-
 Matrix::~Matrix(void)
 { 
-  for (int i = 0; i < this->num_rows; ++i)
-  {
-    delete[] this->base[i];
-  }
-  delete[] this->base;
+  cudaFree(this->flat);
 }
 
 void Matrix::Parse(const char* file)
 {
   ifstream matrix(file);
 
-  if (this-base != 0)
+  if (this->flat != 0)
   {
-    this->freeBase();
+    cudaFree(this->flat);
   }
 
   matrix >> this->num_rows;
   matrix >> this->num_cols;
 
-  this->base = new double[this->num_rows];
+  this->flat = cudaMallocManaged(&flat, sizeof(double) * copy.num_rows * copy.num_cols);
   for (int i = 0; i < this->num_rows; ++i)
   {
-    this->base[i] = new double[this->num_cols];
     for (int j = 0; j < this->num_cols; ++j)
     {
-      matrix >> this->base[i][j];
+      matrix >> this->flat[i * this->num_cols + j];
     }
   }
 }
 
-double ** Matrix::GetRaw(void)
+double * Matrix::GetFlattened(void)
 {
-  return this->base;
+  return this->flat;
 }
 
 int Matrix::GetNumCols(void)

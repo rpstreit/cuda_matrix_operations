@@ -2,28 +2,26 @@
 #ifndef MATRIX_H
 #define MATRIX_H
 
-namespace linalg
+#include "managed.h"
+
+class Matrix : Managed
 {
-  class Matrix
-  {
-    private:
-      double **base = 0;
-      int num_cols = 0;
-      int num_rows = 0;
-      void freeBase(void);
+  private:
+    double *flat = 0;
+    int num_cols = 0;
+    int num_rows = 0;
 
-    public:
-      Matrix(const char *file);
-      Matrix(const Matrix &copy);
-      Matrix(void);
+  public:
+    Matrix(const char *file);
+    Matrix(const Matrix &copy);
+    Matrix(void) = delete;
 
-      ~Matrix(void);
+    ~Matrix(void);
 
-      void Parse(const char *file);
-      double ** GetRaw(void);
-      int GetNumCols(void);
-      int GetNumRows(void);
-  }
+    void Parse(const char *file);
+    double * GetFlattened(void);
+    int GetNumCols(void);
+    int GetNumRows(void);
 }
 
 #endif
