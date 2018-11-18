@@ -18,10 +18,13 @@ class Matrix : Managed
 
     ~Matrix(void);
 
+    double * operator[](int row_idx);
+
     void Parse(const char *file);
-    double * GetFlattened(void);
-    int GetNumCols(void);
-    int GetNumRows(void);
+    
+    __host__ __device__ double * GetFlattened(void);
+    __host__ __device__ int GetNumCols(void);
+    __host__ __device__ int GetNumRows(void);
 }
 
 #endif

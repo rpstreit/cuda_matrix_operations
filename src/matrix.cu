@@ -27,6 +27,11 @@ Matrix::~Matrix(void)
   cudaFree(this->flat);
 }
 
+double * operator[](int row_idx)
+{
+  return &(this-flat[row_idx * this->num_cols]);
+}
+
 void Matrix::Parse(const char* file)
 {
   ifstream matrix(file);
@@ -49,17 +54,17 @@ void Matrix::Parse(const char* file)
   }
 }
 
-double * Matrix::GetFlattened(void)
+__host__ __device__ double * Matrix::GetFlattened(void)
 {
   return this->flat;
 }
 
-int Matrix::GetNumCols(void)
+__host__ __device__ int Matrix::GetNumCols(void)
 {
   return this->num_cols;
 }
 
-int Matrix::GetNumRows(void)
+__host__ __device__ int Matrix::GetNumRows(void)
 {
   return this->num_rows;
 }
