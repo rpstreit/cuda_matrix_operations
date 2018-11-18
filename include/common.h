@@ -1,4 +1,9 @@
 
+#ifndef COMMON_H
+#define COMMON_H
+
+#define THREADS_PER_BLOCK 256
+
 class enum Reduction
 {
   ADD, MIN, MAX, MUL
@@ -22,3 +27,15 @@ double reduce(double *data, int length, Reduction op_type);
 // nxm
 // Outputs: Resulting transpose in result
 void matrix_transpose(Matrix *mat, Matrix *result)
+
+// matrix_multiply
+//
+// Computes a matrix matrix multiplication in parallel
+//
+// Inputs: Managed matrices A and B pointers, pre allocated matrix
+// result pointer. Note: ensure that for mxl * lxn matrix multiply
+// result is mxn
+// Outpus: Resulting multiply in result
+void matrix_multiply(Matrix *A, Matrix *B, Matrix *result);
+
+#endif
