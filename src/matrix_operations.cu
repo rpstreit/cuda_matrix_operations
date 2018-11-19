@@ -105,8 +105,6 @@ void matrix_transpose(Matrix *mat, Matrix *result)
   cudaDeviceSynchronize();
 }
 
-<<<<<<< HEAD
-
 /**
  * Performs the dot product of two vectors
  * Assumes both vectors are column vectors (columns = 1) 
