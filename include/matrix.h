@@ -4,7 +4,7 @@
 
 #include "managed.h"
 
-class Matrix : Managed
+class Matrix : public Managed
 {
   private:
     double *flat = 0;
@@ -24,6 +24,9 @@ class Matrix : Managed
     void Parse(const char *file);
     
     __host__ __device__ double * operator[](int row_idx);
+    Matrix * operator-(Matrix *other);
+    Matrix * operator+(Matrix *other);
+    Matrix * operator*(double scale);
     __host__ __device__ double & At(int row, int col);
     __host__ __device__ double * GetFlattened(void);
     __host__ __device__ int GetNumCols(void);

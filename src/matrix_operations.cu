@@ -3,6 +3,7 @@
 
 #include "matrix.h"
 #include "common.h"
+#include <math.h>
 
 __global__ void kmatrix_transpose(Matrix *in, Matrix *out);
 __global__ void kmatrix_multiply(Matrix *A, Matrix *B, Matrix *result);
@@ -12,6 +13,8 @@ __global__ void kmatrix_multiply_writeresult(double *raw, Matrix *result);
 __global__ void kmatrix_slicecolumn(Matrix *A, double *slice, int col_idx);
 __global__ void kmatrix_writeblock(Matrix *dest, Matrix *src, BlockLoc loc);
 __global__ void kmatrix_sliceblock(Matrix *src, Matrix *dest, BlockLoc loc);
+
+__global__ void kvector_square(Matrix *src, Matrix *dest);
 
 void matrix_sliceblock(Matrix *src, Matrix *dest, BlockLoc loc)
 {
@@ -114,7 +117,8 @@ void matrix_transpose(Matrix *mat, Matrix *result)
  * @param  vec2 Vector of size rows x 1
  * @return      dot product of the two vectors.....
  */
-double dot_product(Matrix *vec1, Matrix *vec2) {
+double dot_product(Matrix *vec1, Matrix *vec2) 
+{
   // First Transpose vector 2 for matrix multiplication
   int length = vec1->GetNumRows();
   Matrix *temp = new Matrix(1, length);
@@ -131,6 +135,52 @@ double dot_product(Matrix *vec1, Matrix *vec2) {
   return prod;
 }
 
+/**
+ * Get the norm of a vector (i.e. the magnitude-ish)
+ * This will be the |v|
+ * @param  vector vector to get norm of
+ * @return        the weird
+ */
+double norm(Matrix *vector) 
+{
+  // Make a new vector
+  Matrix *output_vector = new Matrix(vector->GetNumRows(), vector->GetNumCols());
+  int length;
+  if(vector->GetNumRows() == 1) {
+    length = vector->GetNumCols();
+  } else {
+    length = vector->GetNumRows();
+  }
+
+  kvector_square<<<length / THREADS_PER_BLOCK, THREADS_PER_BLOCK>>>(vector, output_vector);
+
+  double norm =  sqrt(reduce(output_vector, length, Reduction::ADD));
+  delete output_vector;
+  return norm;
+}
+
+
+/**
+ * Squares every element in a vector
+ * Assumes destination vector has been properly allocated
+ * @param src  source vector of elements to square
+ * @param dest output vector of squared elements
+ */
+__global__ void kvector_square(Matrix *src, Matrix *dest)
+{
+  int idx = threadIdx.x + blockIdx.x * blockDim.x;
+  int length;
+  if(src->GetNumRows() == 1) {
+    length = src->GetNumCols();
+  } else {
+    length = src->GetNumRows();
+  }
+
+  if(idx < length) {
+    dest->GetFlattened()[idx] = src->GetFlattened()[idx] * src->GetFlattened()[idx];
+  }
+
+}
 
 __global__ void kmatrix_sliceblock(Matrix *src, Matrix *dest, BlockLoc loc)
 {

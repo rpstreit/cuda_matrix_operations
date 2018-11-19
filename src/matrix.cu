@@ -1,8 +1,8 @@
 
 #include <fstream>
 
-#include "common.h"
 #include "matrix.h"
+#include "common.h"
 
 Matrix::Matrix(const char *file)
 {
@@ -40,10 +40,14 @@ Matrix::~Matrix(void)
   cudaFree(this->flat);
 }
 
+
+/////////////////////
+// CUDA Operations //
+/////////////////////
 __global__ void kset_identity(Matrix *A)
 { 
- 	int idx = threadIdx.x + blockIdx.x * blockDim.x;
-	
+  int idx = threadIdx.x + blockIdx.x * blockDim.x;
+  
   if ((idx / A->GetNumCols()) == (idx % A->GetNumCols()))
   {
     A->GetFlattened()[idx] = 1;
@@ -53,6 +57,40 @@ __global__ void kset_identity(Matrix *A)
     A->GetFlattened()[idx] = 0;
   }
 }
+
+__global__ void ksubtract(Matrix *output, Matrix *A, Matrix *B)
+{
+  int idx = threadIdx.x + blockIdx.x * blockDim.x;
+  if(idx < (A->GetNumCols() * A->GetNumRows())) 
+  {
+    int row = idx / A->GetNumCols();
+    int col = idx % A->GetNumCols();
+    (*output)[row][col] = (*A)[row][col] - (*B)[row][col];
+  }
+}
+
+__global__ void kadd(Matrix *output, Matrix *A, Matrix *B)
+{
+  int idx = threadIdx.x + blockIdx.x * blockDim.x;
+  if(idx < (A->GetNumCols() * A->GetNumRows())) 
+  {
+    int row = idx / A->GetNumCols();
+    int col = idx % A->GetNumCols();
+    (*output)[row][col] = (*A)[row][col] + (*B)[row][col];
+  }
+}
+
+__global__ void kmultiply(Matrix *output, Matrix *input, double scale)
+{
+  int idx = threadIdx.x + blockIdx.x * blockDim.x;
+  if(idx < (input->GetNumCols() * input->GetNumRows())) 
+  {
+    int row = idx / input->GetNumCols();
+    int col = idx % input->GetNumCols();
+    (*output)[row][col] = (*input)[row][col] * scale;
+  }
+}
+
 
 void Matrix::set_identity(void)
 {
@@ -66,10 +104,39 @@ __host__ __device__ double & Matrix::At(int row, int col)
   return (*this)[row][col];
 }
 
+////////////////////////
+// Operator Overloads //
+////////////////////////
 __host__ __device__ double * Matrix::operator[](int row_idx)
 {
   return &(this->flat[row_idx * this->num_cols]);
 }
+
+Matrix * Matrix::operator-(Matrix *other) 
+{
+  Matrix *blah = new Matrix(this->num_rows, this->num_cols);
+  int num_blocks = (this->num_cols * this->num_rows + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+  ksubtract<<<num_blocks, THREADS_PER_BLOCK>>>(blah, this, other);
+  return blah;
+}
+
+Matrix * Matrix::operator+(Matrix *other) 
+{
+  Matrix *blah = new Matrix(this->num_rows, this->num_cols);
+  int num_blocks = (this->num_cols * this->num_rows + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+  kadd<<<num_blocks, THREADS_PER_BLOCK>>>(blah, this, other);
+  return blah;
+}
+
+Matrix * Matrix::operator*(double scale) 
+{
+  Matrix *blah = new Matrix(this->num_rows, this->num_cols);
+  int num_blocks = (this->num_cols * this->num_rows + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+  kmultiply<<<num_blocks, THREADS_PER_BLOCK>>>(blah, this, scale);
+  return blah;
+}
+
+
 
 void Matrix::Parse(const char* file)
 {
