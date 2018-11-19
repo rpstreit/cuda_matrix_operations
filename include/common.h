@@ -2,17 +2,19 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#include <tuple>
+
 #define THREADS_PER_BLOCK 256
 
-class enum Reduction
+enum class Reduction : int
 {
   ADD, MIN, MAX, MUL
-}
+};
 
-class enum BlockLoc
+enum class BlockLoc : int
 {
   UPPERLEFT, UPPERRIGHT, BOTTOMLEFT, BOTTOMRIGHT 
-}
+};
 
 // reduce
 //
@@ -33,7 +35,7 @@ std::tuple<int, double> reduce_maxidx(double *data, int length);
 // result pointer. Note: ensure that for mxn matrix mat result is 
 // nxm
 // Outputs: Resulting transpose in result
-void matrix_transpose(Matrix *mat, Matrix *result)
+void matrix_transpose(Matrix *mat, Matrix *result);
 
 // matrix_multiply
 //
@@ -47,6 +49,8 @@ void matrix_multiply(Matrix *A, Matrix *B, Matrix *result);
 
 void matrix_writeblock(Matrix *dest, Matrix *src_block, BlockLoc loc);
 
-void matrix_columnslice(Matrix *A, double *slice, int col_idx);
+void matrix_sliceblock(Matrix *src, Matrix *dest, BlockLoc loc);
+
+void matrix_slicecolumn(Matrix *A, double *slice, int col_idx);
 
 #endif
