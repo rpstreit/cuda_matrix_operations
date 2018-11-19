@@ -4,6 +4,8 @@
 
 #include <tuple>
 
+#include "matrix.h"
+
 #define THREADS_PER_BLOCK 256
 
 enum class Reduction : int
