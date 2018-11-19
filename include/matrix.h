@@ -11,7 +11,7 @@ class Matrix : Managed
     int num_cols = 0;
     int num_rows = 0;
 
-    __global__ set_identity(void);
+    void set_identity(void);
 
   public:
     Matrix(const char *file);
@@ -23,10 +23,11 @@ class Matrix : Managed
 
     void Parse(const char *file);
     
-    __host__ __device__ double * operator[](int row_idx); 
+    __host__ __device__ double * operator[](int row_idx);
+    __host__ __device__ double & At(int row, int col);
     __host__ __device__ double * GetFlattened(void);
     __host__ __device__ int GetNumCols(void);
     __host__ __device__ int GetNumRows(void);
-}
+};
 
 #endif

@@ -1,12 +1,14 @@
 
+#include <tuple>
+
 #include "matrix.h"
 #include "common.h"
 
 __global__ void kmatrix_transpose(Matrix *in, Matrix *out);
-__global__ void kmatrix_multiply(Matrix *A, Matrix *B, Matrix *result)
-__global__ void kmatrix_multiply_mapsums(Matrix *A, Matrix *B, double *result)
-__global__ void kmatrix_multiply_reducesums(double *in, int depth, double *out)
-__global__ void kmatrix_multiply_writeresult(double *raw, Matrix *result)
+__global__ void kmatrix_multiply(Matrix *A, Matrix *B, Matrix *result);
+__global__ void kmatrix_multiply_mapsums(Matrix *A, Matrix *B, double *result);
+__global__ void kmatrix_multiply_reducesums(double *in, int depth, double *out);
+__global__ void kmatrix_multiply_writeresult(double *raw, Matrix *result);
 __global__ void kmatrix_slicecolumn(Matrix *A, double *slice, int col_idx);
 __global__ void kmatrix_writeblock(Matrix *dest, Matrix *src, BlockLoc loc);
 __global__ void kmatrix_sliceblock(Matrix *src, Matrix *dest, BlockLoc loc);
@@ -35,7 +37,7 @@ void matrix_writeblock(Matrix *dest, Matrix *src, BlockLoc loc)
 void matrix_slicecolumn(Matrix *A, double *slice, int col_idx)
 {
 	int num_blocks = (A->GetNumRows() + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-  matrix_slicecolumn<<<num_blocks, THREADS_PER_BLOCK>>>(A, slice, col_idx);
+  kmatrix_slicecolumn<<<num_blocks, THREADS_PER_BLOCK>>>(A, slice, col_idx);
   cudaDeviceSynchronize();
 }
 
@@ -81,7 +83,7 @@ void matrix_multiply(Matrix *A, Matrix *B, Matrix *result)
     }
   }
 
-  int num_blocks = (rrows * rcols + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+  num_blocks = (rrows * rcols + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
   kmatrix_multiply_writeresult<<<num_blocks, THREADS_PER_BLOCK>>>(inter2, result);
 
   cudaFree(inter2);
@@ -99,7 +101,7 @@ void matrix_multiply(Matrix *A, Matrix *B, Matrix *result)
 void matrix_transpose(Matrix *mat, Matrix *result)
 {
 	int num_blocks = (mat->GetNumRows() * mat->GetNumCols() + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-  matrix_transpose<<<num_blocks, THREADS_PER_BLOCK>>>(mat, result);
+  kmatrix_transpose<<<num_blocks, THREADS_PER_BLOCK>>>(mat, result);
   cudaDeviceSynchronize();
 }
 
@@ -135,9 +137,8 @@ __global__ void kmatrix_sliceblock(Matrix *src, Matrix *dest, BlockLoc loc)
         start_row = src->GetNumRows() - dest->GetNumRows();
         start_col = src->GetNumCols() - dest->GetNumCols();
         break;
-
-      dest[row][col] = src[start_row + row][start_col + col];
     }
+    (*dest)[row][col] = (*src)[start_row + row][start_col + col];
   }
 }
 
@@ -173,17 +174,15 @@ __global__ void kmatrix_writeblock(Matrix *dest, Matrix *src, BlockLoc loc)
         start_row = dest->GetNumRows() - src->GetNumRows();
         start_col = dest->GetNumCols() - src->GetNumCols();
         break;
-
-      dest[start_row + row][start_col + col] = src[row][col];
     }
+    (*dest)[start_row + row][start_col + col] = (*src)[row][col];
   }
 }
 
 
-__global__ kmatrix_transpose(Matrix *in, Matrix *out)
+__global__ void kmatrix_transpose(Matrix *in, Matrix *out)
 { 
  	int idx = threadIdx.x + blockIdx.x * blockDim.x;
-	int tid = threadIdx.x;
 	bool past_length = idx < in->GetNumRows() * in->GetNumCols() ? false : true;
 
   if (!past_length)
@@ -191,7 +190,7 @@ __global__ kmatrix_transpose(Matrix *in, Matrix *out)
     int row = idx / in->GetNumCols();
     int col = idx % in->GetNumCols();
 
-    out[col][row] = in[row][col];
+    (*out)[col][row] = (*in)[row][col];
   }
 }
 
@@ -207,14 +206,14 @@ __global__ void kmatrix_slicecolumn(Matrix *A, double *slice, int col_idx)
 __global__ void kmatrix_multiply_writeresult(double *raw, Matrix *result)
 {
  	int idx = threadIdx.x + blockIdx.x * blockDim.x;
-	int tid = threadIdx.x;
 	bool past_length = idx < result->GetNumRows() * result->GetNumCols() ? false : true;
 
-  result.GetRaw()[idx] = raw[idx];
+  result->GetFlattened()[idx] = raw[idx];
 }
 
 __global__ void kmatrix_multiply_reducesums(double *in, int depth, double *out)
 {
+  int tid = threadIdx.x;
   int blocksPerDepth = (depth + blockDim.x - 1) / blockDim.x;
   int idx_2d = blockIdx.x / blocksPerDepth;
   int base = idx_2d * depth;
@@ -254,7 +253,6 @@ __global__ void kmatrix_multiply_reducesums(double *in, int depth, double *out)
 __global__ void kmatrix_multiply_mapsums(Matrix *A, Matrix *B, double *result)
 {
  	int idx = threadIdx.x + blockIdx.x * blockDim.x;
-	int tid = threadIdx.x;
 	bool past_length = idx < A->GetNumRows() * B->GetNumCols() * A->GetNumCols() ? false : true;
   
   if (!past_length)
@@ -263,6 +261,6 @@ __global__ void kmatrix_multiply_mapsums(Matrix *A, Matrix *B, double *result)
     int col = (idx / A->GetNumCols()) % B->GetNumCols();
     int depth = idx % (B->GetNumCols() * A->GetNumCols());
 
-    result[idx] = A[row][depth] * B[depth][col];
+    result[idx] = (*A)[row][depth] * (*B)[depth][col];
   }
 }
