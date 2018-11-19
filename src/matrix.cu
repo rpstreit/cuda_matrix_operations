@@ -22,9 +22,37 @@ Matrix::Matrix(const Matrix &copy) :
   }
 }
 
+Matrix::Matrix(int num_rows, int num_cols, bool identity) :
+  num_rows(num_rows),
+  num_cols(num_cols)
+{
+  this->flat = cudaMallocManaged(&flat, sizeof(double) * num_rows * num_cols);
+
+  if (identity)
+  {
+    int num_blocks = (num_cols * num_rows + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+    this->set_identity<<<num_blocks, THREADS_PER_BLOCK>>>();
+    cudaDeviceSynchronize();
+  }
+}
+
 Matrix::~Matrix(void)
 { 
   cudaFree(this->flat);
+}
+
+__global__ Matrix::set_identity(void)
+{ 
+ 	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	
+  if ((idx / num_cols) == (idx % num_cols))
+  {
+    this->flat[idx] = 1;
+  }
+  else
+  {
+    this->flat[idx] = 0;
+  }
 }
 
 double * operator[](int row_idx)

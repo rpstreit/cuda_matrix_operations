@@ -7,6 +7,22 @@ __global__ void kmatrix_multiply(Matrix *A, Matrix *B, Matrix *result)
 __global__ void kmatrix_multiply_mapsums(Matrix *A, Matrix *B, double *result)
 __global__ void kmatrix_multiply_reducesums(double *in, int depth, double *out)
 __global__ void kmatrix_multiply_writeresult(double *raw, Matrix *result)
+__global__ void kmatrix_slicecolumn(Matrix *A, double *slice, int col_idx);
+__global__ void kmatrix_writeblock(Matrix *dest, Matrix *src, BlockLoc loc);
+
+void matrix_writeblock(Matrix *dest, Matrix *src, BlockLoc loc)
+{
+  int cols = src->GetNumCols();
+  int rows = src->GetNumRows();
+
+}
+
+void matrix_slicecolumn(Matrix *A, double *slice, int col_idx)
+{
+	int num_blocks = (A->GetNumRows() + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+  matrix_slicecolumn<<<num_blocks, THREADS_PER_BLOCK>>>(A, slice, col_idx);
+  cudaDeviceSynchronize();
+}
 
 // matrix_multiply
 //
@@ -84,6 +100,15 @@ __global__ kmatrix_transpose(Matrix *in, Matrix *out)
     int col = idx % in->GetNumCols();
 
     out[col][row] = in[row][col];
+  }
+}
+
+__global__ void kmatrix_slicecolumn(Matrix *A, double *slice, int col_idx)
+{
+  int idx = threadIdx.x + blockIdx.x * blockDim.x;
+  if (idx < A->GetNumRows())
+  {
+    slice[idx] = (*A)[col_idx][idx];
   }
 }
 

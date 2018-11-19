@@ -9,6 +9,11 @@ class enum Reduction
   ADD, MIN, MAX, MUL
 }
 
+class enum BlockLoc
+{
+  UPPERLEFT, UPPERRIGHT, BOTTOMLEFT, BOTTOMRIGHT 
+}
+
 // reduce
 //
 // Computes a specified reduction operation in parallel
@@ -17,6 +22,8 @@ class enum Reduction
 // operation wished to be performed
 // Outputs: double result of reduction
 double reduce(double *data, int length, Reduction op_type);
+
+std::tuple<int, double> reduce_maxidx(double *data, int length);
 
 // matrix_transpose
 //
@@ -37,5 +44,9 @@ void matrix_transpose(Matrix *mat, Matrix *result)
 // result is mxn
 // Outpus: Resulting multiply in result
 void matrix_multiply(Matrix *A, Matrix *B, Matrix *result);
+
+void matrix_writeblock(Matrix *dest, Matrix *src_block, BlockLoc loc);
+
+void matrix_columnslice(Matrix *A, double *slice, int col_idx);
 
 #endif
