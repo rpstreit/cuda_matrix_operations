@@ -47,6 +47,8 @@ void matrix_multiply(Matrix *A, Matrix *B, Matrix *result);
 
 void matrix_writeblock(Matrix *dest, Matrix *src_block, BlockLoc loc);
 
-void matrix_columnslice(Matrix *A, double *slice, int col_idx);
+void matrix_sliceblock(Matrix *src, Matrix *dest, BlockLoc loc);
+
+void matrix_slicecolumn(Matrix *A, double *slice, int col_idx);
 
 #endif
