@@ -115,9 +115,6 @@ void Matrix::ToIdentity(void)
 __host__ __device__ double * Matrix::operator[](int row_idx)
 {
   return &(this->flat[row_idx * this->num_cols]);
-  int num_blocks = (num_cols * num_rows + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-  kset_identity<<<num_blocks, THREADS_PER_BLOCK>>>(this->flat, this->num_cols);
-  cudaDeviceSynchronize();
 }
 
 Matrix * Matrix::operator-(Matrix *other) 
@@ -168,10 +165,6 @@ void Matrix::Parse(const char* file)
   }
 }
 
-__host__ __device__ double * Matrix::operator[](int row_idx)
-{
-  return &(this->flat[row_idx * this->num_cols]);
-}
 
 __host__ __device__ double & Matrix::At(int row, int col)
 {

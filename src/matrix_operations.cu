@@ -229,9 +229,9 @@ double norm(Matrix *vector)
 
   kvector_square<<<length / THREADS_PER_BLOCK, THREADS_PER_BLOCK>>>(vector, output_vector);
 
-  double norm =  sqrt(reduce(output_vector, length, Reduction::ADD));
+  double normal =  sqrt(reduce(output_vector->GetFlattened(), length, Reduction::ADD));
   delete output_vector;
-  return norm;
+  return normal;
 }
 
 
