@@ -27,7 +27,7 @@ enum class BlockLoc : int
 // Outputs: double result of reduction
 double reduce(double *data, int length, Reduction op_type);
 
-std::tuple<int, double> reduce_maxidx(double *data, int length);
+double reduce_maxidx(double *data, int length, int *idx);
 
 // matrix_transpose
 //
