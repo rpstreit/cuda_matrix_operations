@@ -23,7 +23,7 @@ linearSysSolver::~linearSysSolver() {
 }
 
 
-Matrix linearSysSolver::steepestDescent() {
+Matrix * linearSysSolver::steepestDescent() {
     const double error = .005;
     double size = b_operator->GetNumRows();
     Matrix x0 = new Matrix(size, 0); // make a column vector
@@ -43,9 +43,8 @@ Matrix linearSysSolver::steepestDescent() {
 }
 
 
-vector linearSysSolver::inverse() {
-    matrix A_inverse = getInverse(A_operator);
-    return matrixMultiple(A_inverse, b_operator);
+Matrix * linearSysSolver::inverse() {
+
 }
 
 
@@ -67,7 +66,42 @@ std::vector<Matrix *> constructAConjugates() {
         p_vectors.push_back(temp);
     }
 
-    for(int i=1; i<length; i++) {
-        Matrix q()
+
+    Matrix *pj_t = new Matrix(1, length);
+    Matrix *pj_t_A = new Matrix(1, length);
+    Matrix pj_t_A_pk = new Matrix(1, 1);
+    Matrix pj_t_A_pj = new Matrix(1, 1);
+
+    for(int k=1; i<length; i++) {
+        for(j=0; j<k; j++) {
+            // get Pj transpose
+            matrix_transpose(p_vectors[j], pj_t);
+            
+            // Get Pj transpose * A
+            matrix_multiply(pj_t, A_operator, pj_t_A);
+
+            // Get (Pj transpose * A) * Pk
+            matrix_multiply(pj_t_A, p_vectors[k], pj_t_A_pk);
+
+            // final value of the numerator
+            double numerator = pj_t_A_pk[0][0];
+
+            // Get (Pj transpose * A) * Pj
+            matrix_multiply(pj_t_A, p_vectors[k], pj_t_A_pj);
+            
+            // final value of the denominator
+            double denominator = pj_t_A_pj[0][0];
+
+            double multiplier = numerator / denominator;
+
+            p_vectors[k] = p_vectors[k] - multiplier * p_vectors[j]; 
+        }
     }
+
+    delete pj_t;
+    delete pj_t_A;
+    delete pj_t_A_pk;
+    delete pj_t_A_pj;
+
+    return p_vectors;
 }
