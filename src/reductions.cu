@@ -10,7 +10,7 @@ __global__ void kreduce_max(double *g_in, double *g_out, int length, int *idx_in
 
 __global__ void kget_counting_array(int *result, int length);
 
-std::tuple<int, double> reduce_maxidx(double *data, int length)
+double reduce_maxidx(double *data, int length, int *idx)
 {
 	double *d_out;
   int *d_idx1, *d_idx2;
@@ -54,7 +54,8 @@ std::tuple<int, double> reduce_maxidx(double *data, int length)
   cudaFree(d_idx1);
   cudaFree(d_idx2);
 
-	return std::make_tuple(idx_out, h_out);
+	*idx = idx_out;
+  return h_out;
 }
 
 // reduce

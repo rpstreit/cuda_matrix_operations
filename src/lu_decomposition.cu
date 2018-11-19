@@ -1,6 +1,4 @@
 
-#include <tuple>
-
 #include "common.h"
 #include "matrix.h"
 
@@ -24,9 +22,8 @@ void lu_decomposition(Matrix *A, Matrix *L, Matrix *U, Matrix *P)
   {
     P_intermediate->ToIdentity(); // O(1)
     matrix_slicecolumn(A, column_slice, i); // O(1)
-    std::tuple<int, double> max_idx = reduce_maxidx(column_slice + i, rows - i); // O(log(rows - i)) <= O(log(rows))
-    int idx = std::get<0>(max_idx);
-    double max = std::get<1>(max_idx);
+    int idx;
+    double max = reduce_maxidx(column_slice + i, rows - i, &idx); // O(log(rows - i)) <= O(log(rows))
 
     if (i != idx)
     {
