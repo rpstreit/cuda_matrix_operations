@@ -180,6 +180,32 @@ __global__ void kmatrix_getelementarymatrix(Matrix *A, Matrix *result, int col)
   }
 }
 
+/**
+ * Performs the dot product of two vectors
+ * Assumes both vectors are column vectors (columns = 1) 
+ *   and equal length
+ * Makes use of transpose and matrix multiply
+ * @param  vec1 Vector of size rows x 1
+ * @param  vec2 Vector of size rows x 1
+ * @return      dot product of the two vectors.....
+ */
+double dot_product(Matrix *vec1, Matrix *vec2) {
+  // First Transpose vector 2 for matrix multiplication
+  int length = vec1->GetNumRows();
+  Matrix *temp = new Matrix(1, length);
+  matrix_transpose(vec2, temp);
+  
+  // Perform the multiplication
+  Matrix *result = new Matrix(1, 1);
+  matrix_multiply(vec1, temp, result);
+
+  // Resulting 1x1 matrix holds the dot product
+  double prod = *(result->GetFlattened());
+  delete temp;
+  delete result;
+  return prod;
+}
+
 __global__ void kmatrix_sliceblock(Matrix *src, Matrix *dest, BlockLoc loc)
 {
  	int idx = threadIdx.x + blockIdx.x * blockDim.x;
