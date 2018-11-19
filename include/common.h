@@ -51,8 +51,7 @@ void matrix_writeblock(Matrix *dest, Matrix *src_block, BlockLoc loc);
 
 void matrix_sliceblock(Matrix *src, Matrix *dest, BlockLoc loc);
 
-void matrix_slicecolumn(Matrix *A, double *slice, int col_idx);
-
+void matrix_slicecolumn(Matrix *A, double *slice, int col_idx); 
 void matrix_copy(Matrix *dest, Matrix *src);
 
 void matrix_rowswap(Matrix *A, int row1, int row2);

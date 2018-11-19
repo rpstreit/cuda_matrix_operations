@@ -15,6 +15,14 @@ __global__ void kmatrix_sliceblock(Matrix *src, Matrix *dest, BlockLoc loc);
 __global__ void kmatrix_copy(Matrix *dest, Matrix *src);
 __global__ void kmatrix_getelementarymatrix(Matrix *A, Matrix *result, int col);
 __global__ void kmatrix_invertelementarymatrix(Matrix *A, Matrix *result, int col);
+__global__ void kmatrix_rowswap(Matrix *A, int row1, int row2);
+
+void matrix_rowswap(Matrix *A, int row1, int row2)
+{
+  int num_blocks = (A->GetNumCols() + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+  kmatrix_rowswap<<<num_blocks, THREADS_PER_BLOCK>>>(A, row1, row2);
+  cudaDeviceSynchronize(); 
+}
 
 void matrix_getelementarymatrix(Matrix *A, Matrix *result, int col)
 {
@@ -134,6 +142,19 @@ void matrix_transpose(Matrix *mat, Matrix *result)
 	int num_blocks = (mat->GetNumRows() * mat->GetNumCols() + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
   kmatrix_transpose<<<num_blocks, THREADS_PER_BLOCK>>>(mat, result);
   cudaDeviceSynchronize();
+}
+
+__global__ void kmatrix_rowswap(Matrix *A, int row1, int row2)
+{
+ 	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	bool past_length = idx < A->GetNumCols() ? false : true;
+
+  if (!past_length && idx != 0)
+  {
+    double temp = (*A)[row1][idx];
+    (*A)[row1][idx] = (*A)[row2][idx];
+    (*A)[row2][idx] = temp;
+  }
 }
 
 __global__ void kmatrix_invertelementarymatrix(Matrix *A, Matrix *result, int col)
