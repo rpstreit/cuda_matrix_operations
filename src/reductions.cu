@@ -115,6 +115,17 @@ double reduce(double *data, int length, Reduction op_type)
 	return h_out;
 }
 
+__global__ void kget_counting_array(int *result, int length)
+{
+ 	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	bool past_length = idx < length ? false : true;
+
+  if (!past_length)
+  {
+    result[idx] = idx;
+  }
+}
+
 __global__ void kreduce_add(double *g_in, double *g_out, int length)
 {
 	__shared__ int s_data[THREADS_PER_BLOCK]; // for speed

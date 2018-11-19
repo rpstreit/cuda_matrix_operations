@@ -11,8 +11,6 @@ class Matrix : public Managed
     int num_cols = 0;
     int num_rows = 0;
 
-    void set_identity(void);
-
   public:
     Matrix(const char *file);
     Matrix(const Matrix &copy);
@@ -23,6 +21,9 @@ class Matrix : public Managed
 
     void Parse(const char *file);
     
+    void ToIdentity(void);
+    void ToZeroes(void);
+
     __host__ __device__ double * operator[](int row_idx);
     Matrix * operator-(Matrix *other);
     Matrix * operator+(Matrix *other);

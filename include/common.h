@@ -4,6 +4,8 @@
 
 #include <tuple>
 
+#include "matrix.h"
+
 #define THREADS_PER_BLOCK 256
 
 enum class Reduction : int
@@ -51,6 +53,15 @@ void matrix_writeblock(Matrix *dest, Matrix *src_block, BlockLoc loc);
 
 void matrix_sliceblock(Matrix *src, Matrix *dest, BlockLoc loc);
 
-void matrix_slicecolumn(Matrix *A, double *slice, int col_idx);
+void matrix_slicecolumn(Matrix *A, double *slice, int col_idx); 
+void matrix_copy(Matrix *dest, Matrix *src);
+
+void matrix_rowswap(Matrix *A, int row1, int row2);
+
+void matrix_getelementarymatrix(Matrix *A, Matrix *result, int col);
+
+void matrix_invertelementarymatrix(Matrix *A, Matrix *result, int col);
+
+bool matrix_equals(Matrix *A, Matrix *B, double error);
 
 #endif

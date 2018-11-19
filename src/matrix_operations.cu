@@ -13,6 +13,45 @@ __global__ void kmatrix_multiply_writeresult(double *raw, Matrix *result);
 __global__ void kmatrix_slicecolumn(Matrix *A, double *slice, int col_idx);
 __global__ void kmatrix_writeblock(Matrix *dest, Matrix *src, BlockLoc loc);
 __global__ void kmatrix_sliceblock(Matrix *src, Matrix *dest, BlockLoc loc);
+__global__ void kmatrix_copy(Matrix *dest, Matrix *src);
+__global__ void kmatrix_getelementarymatrix(Matrix *A, Matrix *result, int col);
+__global__ void kmatrix_invertelementarymatrix(Matrix *A, Matrix *result, int col);
+__global__ void kmatrix_rowswap(Matrix *A, int row1, int row2);
+
+void matrix_rowswap(Matrix *A, int row1, int row2)
+{
+  int num_blocks = (A->GetNumCols() + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+  kmatrix_rowswap<<<num_blocks, THREADS_PER_BLOCK>>>(A, row1, row2);
+  cudaDeviceSynchronize(); 
+}
+
+void matrix_getelementarymatrix(Matrix *A, Matrix *result, int col)
+{
+  result->ToIdentity();
+
+  int num_blocks = (A->GetNumRows() - col + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+  kmatrix_getelementarymatrix<<<num_blocks, THREADS_PER_BLOCK>>>(A, result, col);
+  cudaDeviceSynchronize();
+}
+
+void matrix_invertelementarymatrix(Matrix *A, Matrix *result, int col)
+{
+  result->ToIdentity();
+  int num_blocks = (A->GetNumRows() - col + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+  kmatrix_invertelementarymatrix<<<num_blocks, THREADS_PER_BLOCK>>>(A, result, col);
+  cudaDeviceSynchronize();
+}
+
+void matrix_copy(Matrix *dest, Matrix *src)
+{
+  int cols = dest->GetNumCols();
+  int rows = dest->GetNumRows();
+
+  int num_blocks = (rows * cols + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+ 
+  kmatrix_copy<<<num_blocks, THREADS_PER_BLOCK>>>(dest, src);
+  cudaDeviceSynchronize();
+}
 
 __global__ void kvector_square(Matrix *src, Matrix *dest);
 
@@ -108,6 +147,42 @@ void matrix_transpose(Matrix *mat, Matrix *result)
   cudaDeviceSynchronize();
 }
 
+__global__ void kmatrix_rowswap(Matrix *A, int row1, int row2)
+{
+ 	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	bool past_length = idx < A->GetNumCols() ? false : true;
+
+  if (!past_length && idx != 0)
+  {
+    double temp = (*A)[row1][idx];
+    (*A)[row1][idx] = (*A)[row2][idx];
+    (*A)[row2][idx] = temp;
+  }
+}
+
+__global__ void kmatrix_invertelementarymatrix(Matrix *A, Matrix *result, int col)
+{
+ 	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	bool past_length = idx < result->GetNumRows() - col ? false : true;
+
+  if (!past_length && idx != 0)
+  {
+    (*result)[col + idx][col] = (*A)[col + idx][col] * -1.f;
+  }
+}
+
+__global__ void kmatrix_getelementarymatrix(Matrix *A, Matrix *result, int col)
+{
+ 	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	bool past_length = idx < result->GetNumRows() - col ? false : true;
+
+  if (!past_length && idx != 0)
+  {
+    double pivot = (*A)[col][col];
+    (*result)[col + idx][col] = (*A)[col + idx][col] / pivot;
+  }
+}
+
 /**
  * Performs the dot product of two vectors
  * Assumes both vectors are column vectors (columns = 1) 
@@ -134,6 +209,7 @@ double dot_product(Matrix *vec1, Matrix *vec2)
   delete result;
   return prod;
 }
+
 
 /**
  * Get the norm of a vector (i.e. the magnitude-ish)
@@ -181,6 +257,7 @@ __global__ void kvector_square(Matrix *src, Matrix *dest)
   }
 
 }
+
 
 __global__ void kmatrix_sliceblock(Matrix *src, Matrix *dest, BlockLoc loc)
 {
@@ -285,7 +362,10 @@ __global__ void kmatrix_multiply_writeresult(double *raw, Matrix *result)
  	int idx = threadIdx.x + blockIdx.x * blockDim.x;
 	bool past_length = idx < result->GetNumRows() * result->GetNumCols() ? false : true;
 
-  result->GetFlattened()[idx] = raw[idx];
+  if (!past_length)
+  {
+    result->GetFlattened()[idx] = raw[idx];
+  }
 }
 
 __global__ void kmatrix_multiply_reducesums(double *in, int depth, double *out)
@@ -339,5 +419,16 @@ __global__ void kmatrix_multiply_mapsums(Matrix *A, Matrix *B, double *result)
     int depth = idx % (B->GetNumCols() * A->GetNumCols());
 
     result[idx] = (*A)[row][depth] * (*B)[depth][col];
+  }
+}
+
+__global__ void kmatrix_copy(Matrix *dest, Matrix *src)
+{
+ 	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	bool past_length = idx < dest->GetNumRows() * dest->GetNumCols() ? false : true;
+
+  if (!past_length)
+  {
+    dest->GetFlattened()[idx] = src->GetFlattened()[idx];
   }
 }
