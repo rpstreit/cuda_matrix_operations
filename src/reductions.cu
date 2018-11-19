@@ -1,6 +1,4 @@
 
-#include <tuple>
-
 #include "common.h"
 
 __global__ void kreduce_add(double *g_in, double *g_out, int length);
@@ -76,19 +74,19 @@ double reduce(double *data, int length, Reduction op_type)
 	{
     switch (op_type)
     {
-      case Reduction::MIN: 
+      case MIN: 
         kreduce_min<<<num_blocks, THREADS_PER_BLOCK>>>(data, d_out, length);
         break;
 
-      case Reduction::MAX:
+      case MAX:
         kreduce_max<<<num_blocks, THREADS_PER_BLOCK>>>(data, d_out, length, 0, 0);
         break;
 
-      case Reduction::ADD:
+      case ADD:
         kreduce_add<<<num_blocks, THREADS_PER_BLOCK>>>(data, d_out, length);
         break;
 
-      case Reduction::MUL:
+      case MUL:
         kreduce_product<<<num_blocks, THREADS_PER_BLOCK>>>(data, d_out, length);
         break;
     }

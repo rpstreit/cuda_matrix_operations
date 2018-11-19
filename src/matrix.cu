@@ -7,14 +7,18 @@
 __global__ void kset_zeroes(double *A);
 __global__ void kset_identity(double *A, int cols);
 
-Matrix::Matrix(const char *file)
+Matrix::Matrix(const char *file) :
+  num_rows(0),
+  num_cols(0),
+  flat(0)
 {
   this->Parse(file);
 }
 
 Matrix::Matrix(const Matrix &copy) :
   num_rows(copy.num_rows),
-  num_cols(copy.num_cols)
+  num_cols(copy.num_cols),
+  flat(0)
 {
   cudaMallocManaged(&flat, sizeof(double) * copy.num_rows * copy.num_cols);
   for (int i = 0; i < this->num_rows; ++i)
@@ -28,7 +32,8 @@ Matrix::Matrix(const Matrix &copy) :
 
 Matrix::Matrix(int num_rows, int num_cols, bool identity) :
   num_rows(num_rows),
-  num_cols(num_cols)
+  num_cols(num_cols),
+  flat(0)
 {
   cudaMallocManaged(&flat, sizeof(double) * num_rows * num_cols);
 

@@ -2,18 +2,16 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-#include <tuple>
-
 #include "matrix.h"
 
 #define THREADS_PER_BLOCK 256
 
-enum class Reduction : int
+enum Reduction
 {
   ADD, MIN, MAX, MUL
 };
 
-enum class BlockLoc : int
+enum BlockLoc
 {
   UPPERLEFT, UPPERRIGHT, BOTTOMLEFT, BOTTOMRIGHT 
 };

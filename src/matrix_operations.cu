@@ -229,7 +229,7 @@ double norm(Matrix *vector)
 
   kvector_square<<<length / THREADS_PER_BLOCK, THREADS_PER_BLOCK>>>(vector, output_vector);
 
-  double normal =  sqrt(reduce(output_vector->GetFlattened(), length, Reduction::ADD));
+  double normal =  sqrt(reduce(output_vector->GetFlattened(), length, ADD));
   delete output_vector;
   return normal;
 }
@@ -271,22 +271,22 @@ __global__ void kmatrix_sliceblock(Matrix *src, Matrix *dest, BlockLoc loc)
   {
     switch(loc)
     {
-      case BlockLoc::UPPERLEFT:
+      case UPPERLEFT:
         start_row = 0;
         start_col = 0;
         break;
 
-      case BlockLoc::UPPERRIGHT:
+      case UPPERRIGHT:
         start_row = 0;
         start_col = src->GetNumCols() - dest->GetNumCols();
         break;
 
-      case BlockLoc::BOTTOMLEFT:
+      case BOTTOMLEFT:
         start_row = src->GetNumRows() - dest->GetNumRows();
         start_col = 0;
         break;
 
-      case BlockLoc::BOTTOMRIGHT:
+      case BOTTOMRIGHT:
         start_row = src->GetNumRows() - dest->GetNumRows();
         start_col = src->GetNumCols() - dest->GetNumCols();
         break;
@@ -308,22 +308,22 @@ __global__ void kmatrix_writeblock(Matrix *dest, Matrix *src, BlockLoc loc)
   {
     switch(loc)
     {
-      case BlockLoc::UPPERLEFT:
+      case UPPERLEFT:
         start_row = 0;
         start_col = 0;
         break;
 
-      case BlockLoc::UPPERRIGHT:
+      case UPPERRIGHT:
         start_row = 0;
         start_col = dest->GetNumCols() - src->GetNumCols();
         break;
 
-      case BlockLoc::BOTTOMLEFT:
+      case BOTTOMLEFT:
         start_row = dest->GetNumRows() - src->GetNumRows();
         start_col = 0;
         break;
 
-      case BlockLoc::BOTTOMRIGHT:
+      case BOTTOMRIGHT:
         start_row = dest->GetNumRows() - src->GetNumRows();
         start_col = dest->GetNumCols() - src->GetNumCols();
         break;

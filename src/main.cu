@@ -22,7 +22,7 @@ struct operation_t
                   // otherwise if the test fails, return something else
 };
 
-enum class Operations : int
+enum Operations
 {
   MATMUL,
  
@@ -31,7 +31,7 @@ enum class Operations : int
   COUNT
 };
 
-operation_t ops[static_cast<int>(Operations::COUNT)] =
+operation_t ops[COUNT] =
 {
   {"matmul", 2, matmul_run, matmul_verify},
 };
@@ -58,11 +58,10 @@ int main(int argc, char **argv)
   cudaDeviceProp deviceProps;
   if (!cudaGetDeviceProperties(&deviceProps, device))
   {
-    printf("Using device %d:\n", device);
-    printf("%s; global mem: %dB; compute v%d.%d; clock: %d kHz\n",
-        deviceProps.name, (int)deviceProps.totalGlobalMem,
-        (int)deviceProps.major, (int)deviceProps.minor,
-				(int)deviceProps.clockRate);
+    std::cout << "Using device " << device << ":" << std::endl;
+    std::cout << deviceProps.name << "; global mem: " << deviceProps.totalGlobalMem
+      << "; compute v" << deviceProps.major << "." << deviceProps.minor << 
+      "; clock: " << deviceProps.clockRate << "kHz" << std::endl;
   } 
 
   // iterate through test array and execute matching name
