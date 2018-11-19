@@ -60,4 +60,6 @@ void matrix_getelementarymatrix(Matrix *A, Matrix *result, int col);
 
 void matrix_invertelementarymatrix(Matrix *A, Matrix *result, int col);
 
+bool matrix_equals(Matrix *A, Matrix *B, double error);
+
 #endif
