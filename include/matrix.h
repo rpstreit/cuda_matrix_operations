@@ -4,14 +4,12 @@
 
 #include "managed.h"
 
-class Matrix : Managed
+class Matrix : public Managed
 {
   private:
     double *flat = 0;
     int num_cols = 0;
     int num_rows = 0;
-
-    void set_identity(void);
 
   public:
     Matrix(const char *file);
@@ -23,6 +21,9 @@ class Matrix : Managed
 
     void Parse(const char *file);
     
+    void ToIdentity(void);
+    void ToZeroes(void);
+
     __host__ __device__ double * operator[](int row_idx);
     __host__ __device__ double & At(int row, int col);
     __host__ __device__ double * GetFlattened(void);

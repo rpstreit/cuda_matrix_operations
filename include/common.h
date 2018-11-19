@@ -53,4 +53,12 @@ void matrix_sliceblock(Matrix *src, Matrix *dest, BlockLoc loc);
 
 void matrix_slicecolumn(Matrix *A, double *slice, int col_idx);
 
+void matrix_copy(Matrix *dest, Matrix *src);
+
+void matrix_rowswap(Matrix *A, int row1, int row2);
+
+void matrix_getelementarymatrix(Matrix *A, Matrix *result, int col);
+
+void matrix_invertelementarymatrix(Matrix *A, Matrix *result, int col);
+
 #endif

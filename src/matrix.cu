@@ -31,7 +31,7 @@ Matrix::Matrix(int num_rows, int num_cols, bool identity) :
 
   if (identity)
   {
-    set_identity();
+    ToIdentity();
   }
 }
 
@@ -40,35 +40,49 @@ Matrix::~Matrix(void)
   cudaFree(this->flat);
 }
 
-__global__ void kset_identity(Matrix *A)
+__global__ void kset_zeroes(double *A)
 { 
  	int idx = threadIdx.x + blockIdx.x * blockDim.x;
 	
-  if ((idx / A->GetNumCols()) == (idx % A->GetNumCols()))
+  A[idx] = 0;
+}
+
+__global__ void kset_identity(double *A, int cols)
+{ 
+ 	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	
+  if ((idx / cols) == (idx % cols))
   {
-    A->GetFlattened()[idx] = 1;
+    A[idx] = 1;
   }
   else
   {
-    A->GetFlattened()[idx] = 0;
+    A[idx] = 0;
   }
 }
 
-void Matrix::set_identity(void)
+void Matrix::ToZeroes(void)
 {
   int num_blocks = (num_cols * num_rows + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-  kset_identity<<<num_blocks, THREADS_PER_BLOCK>>>(this);
+  kset_zeroes<<<num_blocks, THREADS_PER_BLOCK>>>(this->flat);
   cudaDeviceSynchronize();
 }
 
-__host__ __device__ double & Matrix::At(int row, int col)
+void Matrix::ToIdentity(void)
 {
-  return (*this)[row][col];
+  int num_blocks = (num_cols * num_rows + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+  kset_identity<<<num_blocks, THREADS_PER_BLOCK>>>(this->flat, this->num_cols);
+  cudaDeviceSynchronize();
 }
 
 __host__ __device__ double * Matrix::operator[](int row_idx)
 {
   return &(this->flat[row_idx * this->num_cols]);
+}
+
+__host__ __device__ double & Matrix::At(int row, int col)
+{
+  return (*this)[row][col];
 }
 
 void Matrix::Parse(const char* file)
