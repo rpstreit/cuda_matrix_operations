@@ -206,12 +206,12 @@ int linear_solve_verify(int argc, Matrix **argv)
   Matrix * x_star = new Matrix(b_operator->GetNumRows(), b_operator->GetNumCols()); 
   matrix_multiply_cpu(A_operator, output1, x_star);
   bool ok = true;
-  for(int i=0; i<x_star->GetNumRows; i++) {
+  for(int i=0; i<x_star->GetNumRows(); i++) {
     if(abs(x_star->GetFlattened()[i] - b_operator->GetFlattened()[i]) > .1)
       ok = false;
   }
 
-  Matrix * output2 = conjugateDirection(A_operator, b_operator);
+  // Matrix * output2 = conjugateDirection(A_operator, b_operator);
   return ok ? 0 : 1;
   // Matrix * combined_eliminator = new Matrix(A_operator->GetNumRows(), A_operator->GetNumCols() + 1);
   // for(int i=0; i<A_operator->GetNumRows(); i++) {
