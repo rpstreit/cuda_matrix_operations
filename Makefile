@@ -6,7 +6,7 @@
 NVCC=nvcc
 BIN=bin
 OBJ=obj
-CFLAGS=-dc -std=c++03
+CFLAGS=-dc
 LDFLAGS=
 SOURCE_DIR=src
 INCLUDE_DIR=include
