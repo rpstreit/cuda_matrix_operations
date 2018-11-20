@@ -105,7 +105,7 @@ void matrix_multiply(Matrix *A, Matrix *B, Matrix *result)
   cudaMalloc((void **) &inter1, rrows * rdepth * rcols * sizeof(double));
   kmatrix_multiply_mapsums<<<num_blocks, THREADS_PER_BLOCK>>>(A, B, inter1);
   double h_inter1[rrows * rdepth * rcols];
-  cudaDeviceSynchronize();
+cudaDeviceSynchronize();
   cudaMemcpy(h_inter1, inter1, rrows * rdepth * rcols *sizeof(double), cudaMemcpyDeviceToHost);
   for (int i = 0; i < rrows; ++i)
   {
@@ -122,12 +122,28 @@ void matrix_multiply(Matrix *A, Matrix *B, Matrix *result)
     std::cout << " ]\n";
   }
 
-  cudaMalloc((void **) &inter2, rrows * num_blocks * rcols * sizeof(double));
   num_blocks = (rdepth + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK * rrows * rcols;
+  cudaMalloc((void **) &inter2, rrows * rdepth * rcols * sizeof(double));
   for(;;)
   {
+    std::cout << "num_blocks: " << num_blocks << std::endl;
     kmatrix_multiply_reducesums<<<num_blocks, THREADS_PER_BLOCK>>>(inter1, rdepth, inter2);
     cudaDeviceSynchronize();
+    cudaMemcpy(h_inter1, inter2, rrows *(num_blocks/(rrows*rcols))* rcols *sizeof(double), cudaMemcpyDeviceToHost);
+    for (int i = 0; i < rrows; ++i)
+    {
+      std::cout<<"[";
+      for (int j = 0; j < rcols; ++j)
+      {
+        std::cout << " {";
+        for (int k = 0; k < (num_blocks/(rrows*rcols)) ; ++k)
+        {
+          std::cout << " " << h_inter1[i * rcols * (num_blocks/(rrows*rcols)) + j * (num_blocks/(rrows*rcols)) + k];
+        }
+        std::cout << " }";
+      }
+      std::cout << " ]\n";
+    }
     if (num_blocks == rrows * rcols)
     {
       break;
@@ -253,14 +269,19 @@ __global__ void kmatrix_getelementarymatrix(Matrix *A, Matrix *result, int col)
  */
 double dot_product(Matrix *vec1, Matrix *vec2) 
 {
+  std::cout << "Performing dot product" << std::endl;
   // First Transpose vector 2 for matrix multiplication
   int length = vec1->GetNumRows();
   Matrix *temp = new Matrix(1, length);
   matrix_transpose(vec2, temp);
-  
+  std::cout << "Temp:" << std::endl;
+  matrix_print(temp);
+
   // Perform the multiplication
   Matrix *result = new Matrix(1, 1);
   matrix_multiply(vec1, temp, result);
+  std::cout << "Result:" << std::endl;
+  matrix_print(result);
 
   // Resulting 1x1 matrix holds the dot product
   double prod = *(result->GetFlattened());
@@ -436,19 +457,23 @@ __global__ void kmatrix_multiply_reducesums(double *in, int depth, double *out)
   int idx, block_idx, depth_idx;
   int block_in_depth;
  
+  block_in_depth = blockIdx.x % blocksPerDepth;
+  block_idx = base + block_in_depth * blocksPerDepth;
+  depth_idx = block_in_depth * blockDim.x + threadIdx.x;
   __shared__ double s_data[THREADS_PER_BLOCK];
 
-  if (!(blockDim.x * blocksPerDepth + threadIdx.x > depth))
+  if (depth_idx < depth)
   {
-    block_in_depth = blockIdx.x % blocksPerDepth;
-    block_idx = base + block_in_depth * blocksPerDepth;
     idx = block_idx + threadIdx.x;
-    depth_idx = block_in_depth * blockDim.x + threadIdx.x;
 
     s_data[threadIdx.x] = in[idx];
   }
+  else
+  {
+    s_data[threadIdx.x] = 0.f;
+  }
   __syncthreads();
-  if (!(blockDim.x * blocksPerDepth + threadIdx.x > depth))
+  if (depth_idx < depth)
   {
 		for (unsigned int i = blockDim.x / 2; i > 0; i >>= 1)
 		{
