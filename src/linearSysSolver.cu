@@ -25,14 +25,14 @@ Matrix * steepestDescent(Matrix *A_operator, Matrix *b_operator) {
     Matrix *x_current = x0;
     Matrix *x_next = new Matrix(size, 1);
     Matrix *d_vector = new Matrix(size, 1);
-    Matrix *d_vector_transpose = new Matrix(1, size);
+    // Matrix *d_vector_transpose = new Matrix(1, size);
 
 
     // Allocate all intermediate matrices required
     Matrix * A_xk_1 = new Matrix(size, 1);
     Matrix * A_dk_1 = new Matrix(size, 1);
-    Matrix * A_xk_1_b = new Matrix(size, 1);
-    Matrix * dk_1_A_dk_1 = new Matrix(1, 1);
+    // Matrix * A_xk_1_b = new Matrix(size, 1);
+    // Matrix * dk_1_A_dk_1 = new Matrix(1, 1);
     Matrix * Axk1_boperator = new Matrix(size, 1);
     Matrix * d_vector_scalar = new Matrix(size, 1);
 
@@ -128,11 +128,13 @@ Matrix * steepestDescent(Matrix *A_operator, Matrix *b_operator) {
         }
     } while(norm(d_vector) > error);
 
+    delete x0;
     delete A_xk_1;
     delete A_dk_1;
-    delete dk_1_A_dk_1;
+    // delete dk_1_A_dk_1;
     delete d_vector;
     delete Axk1_boperator;
+    
     return x_current;
 }
 

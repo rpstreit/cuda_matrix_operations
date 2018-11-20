@@ -163,26 +163,3 @@ int determinant_recur(Matrix *A)
 // 		}
 // 	}
 // }
-
-// int determinant_tree(Matrix *A)
-// {
-
-// }
-
-// class TreeNode
-// {
-// 	public: 
-// 		TreeNode *_parent;
-// 		Matrix *_mat;
-
-// 	TreeNode()
-// 	{
-
-// 	}
-
-// 	TreeNode(TreeNode *parent, Matrix *mat)
-// 	{
-// 		_parent = parent;
-// 		_mat = mat;
-// 	}
-// }

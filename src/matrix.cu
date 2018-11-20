@@ -78,38 +78,6 @@ __global__ void kset_identity(Matrix *A)
   }
 }
 
-__global__ void ksubtract(Matrix *output, Matrix *A, Matrix *B)
-{
-  int idx = threadIdx.x + blockIdx.x * blockDim.x;
-  if(idx < (A->GetNumCols() * A->GetNumRows())) 
-  {
-    int row = idx / A->GetNumCols();
-    int col = idx % A->GetNumCols();
-    (*output)[row][col] = (*A)[row][col] - (*B)[row][col];
-  }
-}
-
-__global__ void kadd(Matrix *output, Matrix *A, Matrix *B)
-{
-  int idx = threadIdx.x + blockIdx.x * blockDim.x;
-  if(idx < (A->GetNumCols() * A->GetNumRows())) 
-  {
-    int row = idx / A->GetNumCols();
-    int col = idx % A->GetNumCols();
-    (*output)[row][col] = (*A)[row][col] + (*B)[row][col];
-  }
-}
-
-__global__ void kmultiply(Matrix *output, Matrix *input, double scale)
-{
-  int idx = threadIdx.x + blockIdx.x * blockDim.x;
-  if(idx < (input->GetNumCols() * input->GetNumRows())) 
-  {
-    int row = idx / input->GetNumCols();
-    int col = idx % input->GetNumCols();
-    (*output)[row][col] = (*input)[row][col] * scale;
-  }
-}
 
 
 void Matrix::ToZeroes(void)

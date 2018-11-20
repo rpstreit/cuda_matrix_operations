@@ -146,8 +146,6 @@ int linear_descent_run(int argc, Matrix **argv)
   Matrix * output = steepestDescent(A_operator, b_operator);
   matrix_print(output);
 
-  delete A_operator;
-  delete b_operator;
   delete output;
 
   return 0;
@@ -168,8 +166,6 @@ int conjugate_direction_run(int argc, Matrix **argv)
   Matrix * output = conjugateDirection(A_operator, b_operator);
   matrix_print(output);
 
-  delete A_operator;
-  delete b_operator;
   delete output;
 
   return 0;
@@ -192,6 +188,30 @@ int determinant_recur_run(int argc, Matrix **argv)
 
 int linear_solve_verify(int argc, Matrix **argv)
 {
+  if(argc != 2)
+  {
+    std::cerr << "error: lu decomposition requires 1 argument" << std::endl;
+  }
+  
+  Matrix * A_operator = argv[0];
+  matrix_print(A_operator);
+  Matrix * b_operator = argv[1];
+  matrix_print(b_operator);
+
+  // Matrix * combined_eliminator = new Matrix(A_operator->GetNumRows(), A_operator->GetNumCols() + 1);
+  // for(int i=0; i<A_operator->GetNumRows(); i++) {
+  //   for(int j=0; j<A_operator->GetNumCols(); j++) {
+  //     combined_eliminator->GetFlattened()[i * (A_operator->GetNumCols()+1) + j] = A_operator->GetFlattened()[i * A_operator->GetNumCols() + j]
+  //   }
+  // }
+
+  // for(int i=0; i<A_operator->GetNumRows(); i++) {
+  //   combined_eliminator->GetFlattened()[i*(A_operator->GetNumCols() + 1)] = b_operator->GetFlattened()[i];
+  // }
+
+  // matrix_print(combined_eliminator);
+
+  
   return 0;
 }
 
