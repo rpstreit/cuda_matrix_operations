@@ -6,6 +6,7 @@
 #include "matrix.h"
 #include "common.h"
 
+__global__ void kvector_square(Matrix *src, Matrix *dest);
 __global__ void kmatrix_transpose(Matrix *in, Matrix *out);
 __global__ void kmatrix_multiply(Matrix *A, Matrix *B, Matrix *result);
 __global__ void kmatrix_multiply_mapsums(Matrix *A, Matrix *B, double *result);
@@ -54,7 +55,6 @@ void matrix_copy(Matrix *dest, Matrix *src)
   cudaDeviceSynchronize();
 }
 
-__global__ void kvector_square(Matrix *src, Matrix *dest);
 
 void matrix_sliceblock(Matrix *src, Matrix *dest, BlockLoc loc)
 {
