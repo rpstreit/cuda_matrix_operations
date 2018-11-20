@@ -1,7 +1,9 @@
-
+#include <cstring>
+#include <iostream>
 #include "common.h"
 #include <vector>
 __global__ void kcombine(Matrix* matrix, Matrix* inverse, Matrix* dest);
+__global__ void kseparate(Matrix* matrix, Matrix* final);
 __global__ void find_nonzero(double* matrix, int size, int rowId, double* outId);
 __global__ void pivot(int rowId, int k, double* matrix, int size);
 __global__ void inverseGJE(int j, int k, double* matrix);
@@ -19,10 +21,29 @@ void combineInverse(Matrix* matrix, Matrix* inverse, Matrix* dest){
     cudaDeviceSynchronize();
 }
 
+void getFinalMatrix(Matrix* combined, Matrix* final){
+    int cols = final->GetNumCols();
+    int rows = final->GetNumRows();
+
+    kseparate<<<rows, cols>>>(combined, final);
+    cudaDeviceSynchronize();
+}
+
+// void getFinalMatrix(Matrix* combined, Matrix* final){
+//     int cols = combined->GetNumCols();
+//     int rows = combined->GetNumRows();
+
+//     kseparate<<<rows, cols>>>(combined, final);
+//     cudaDeviceSynchronize();
+// }
+
+
 //Assume the matrix is an n*n matrix
 void GJE_inverse(Matrix* matrix){
-    int size; int j; int k;
-    double *d_row; 
+    int size; int j; 
+    //int k;
+    //double *d_row; 
+    //double *h_flat;
     //double *h_row;
     
     int row = matrix->GetNumRows();
@@ -38,9 +59,12 @@ void GJE_inverse(Matrix* matrix){
 
     j = 0;
     size = matrix->GetNumCols();
+    //size= (int*)malloc(sizeof(int));
+    //cudaMemcpy(size, &matrix->GetNumCols(), sizeof(int), cudaMemcpyDeviceToHost);
 
     //h_row = (double*)malloc(sizeof(double) * size);
-    cudaMalloc((void**)&d_row, sizeof(double) * (size));
+    //h_flat= (double*)malloc(sizeof(double) * size * size);
+    //cudaMalloc((void**)&d_row, sizeof(double) * (size));
 
     double* flat_matrix = combination->GetFlattened();
 
@@ -49,23 +73,41 @@ void GJE_inverse(Matrix* matrix){
         //cudaMemcpy(d_size, size, sizeof(int), cudaMemcpyHostToDevice);
         //find k where matrix[k][j] is not 0
         //find_nonzero(flat_matrix, d_size, d_j, d_row);
-        find_nonzero<<<1, size>>>(flat_matrix, size, j, d_row);
+        //cudaMemcpy(d_flat, flat_matrix, sizeof(double) * row * col, cudaMemcpyHostToDevice);
+        //find_nonzero<<<1, size>>>(flat_matrix, size, j, d_row);
+        //find_nonzero<<<1, size>>>(flat_matrix, matrix->GetNumCols(), j, d_row);
+        //k = (int)(reduce(d_row, size, MIN));
+        //k = j;
 
-        /*k = (int)(reduce(d_row, size, MIN));
+        // cudaMemcpy(h_flat, flat_matrix, sizeof(double) * size * size, cudaMemcpyDeviceToHost);
+        // k = find_nonzero(h_flat, j, size);
         //cudaMemcpy(d_k, k, sizeof(int), cudaMemcpyHostToDevice);
         
         //spawn n threads in 1 block 
-        pivot<<<1, size>>>(j,k, flat_matrix, size);
+        //std::cout << "\nBefore pivot j = " << j<< std::endl;
+        //matrix_print(combination);
+        pivot<<<1, size*2>>>(j,j, flat_matrix, matrix->GetNumCols());
+        cudaDeviceSynchronize();
+        //std::cout << "After pivot" << std::endl;
+        //matrix_print(combination);
+        
+        //pivot<<<1, size>>>(2,3, flat_matrix, 4);
 
         //spawn n threads in 1 block 
-        fixRow<<<1, size>>>(flat_matrix, size, j);
+        fixRow<<<1, size*2>>>(flat_matrix, matrix->GetNumCols(), j);
+        cudaDeviceSynchronize();
+        //std::cout << "After fix row" << std::endl;
+        //matrix_print(combination);
 
         //spawn n threads in each n blocks
-        fixCol<<<size, size>>>(flat_matrix, size, j);*/
+        fixCol<<<size*2, size*2>>>(flat_matrix, matrix->GetNumCols(), j);
+        cudaDeviceSynchronize();
+        //std::cout << "After fix col" << std::endl;
+        //matrix_print(combination);
         j++;
     }
-
-    //matrix_print(combination);
+    getFinalMatrix(combination, matrix);
+    matrix_print(matrix);
     delete inverse;
     delete combination;
 }
@@ -73,6 +115,8 @@ void GJE_inverse(Matrix* matrix){
 __global__ void kcombine(Matrix* matrix, Matrix* inverse, Matrix* dest){
     int idx = threadIdx.x+blockIdx.x*blockDim.x;
     int idx_orig = ((threadIdx.x) + blockIdx.x*((blockDim.x/2)));
+    //int idx_inv = ((threadIdx.x/2) + blockIdx.x*((blockDim.x/2)));
+    int idx_inv = ((threadIdx.x - (blockDim.x/2) - 1) + blockIdx.x*((blockDim.x/2)));
     bool end = idx < dest->GetNumRows() * dest->GetNumCols() ? false : true;
     
     if(!end){
@@ -80,36 +124,66 @@ __global__ void kcombine(Matrix* matrix, Matrix* inverse, Matrix* dest){
             dest->GetFlattened()[idx] = matrix->GetFlattened()[idx_orig];
         }
         else {
-            dest->GetFlattened()[idx] = inverse->GetFlattened()[idx_orig+1];
+            dest->GetFlattened()[idx] = inverse->GetFlattened()[idx_inv + 1];
 	    //dest->GetFlattened()[idx] = 100;
         }
     }
 }
 
-__global__ void find_nonzero(double* matrix, int size, int rowId, double* outId){
-    int colId = threadIdx.x;
-    int num = matrix[size*rowId+colId];
-    if(num != 0.0){
-        outId[colId] = (double) colId;
-    } else{
-        outId[colId] = 0;
-    }
+__global__ void kseparate(Matrix* matrix, Matrix* final){
+    int idx = threadIdx.x+blockIdx.x*blockDim.x;
+    int idx_comb = ((threadIdx.x + (blockDim.x )) + blockIdx.x*((blockDim.x*2)));
 
+    bool end = idx < final->GetNumRows() * final->GetNumCols() ? false : true;
+    if(!end){
+        //if(threadIdx.x < (blockDim.x / 2)) {
+            final->GetFlattened()[idx] = matrix->GetFlattened()[idx_comb];
+        //}
+    }
 }
 
+// __global__ void kseparate(Matrix* matrix, Matrix* final){
+//     int idx_comb = threadIdx.x+blockIdx.x*blockDim.x;
+//     int idx = ((threadIdx.x + (blockDim.x - 1)) + blockIdx.x*((blockDim.x*2)));
+
+//     bool end = idx_comb < matrix->GetNumRows() * matrix->GetNumCols() ? false : true;
+//     if(!end){
+//         if(threadIdx.x < (blockDim.x / 2)) {
+//             final->GetFlattened()[idx] = matrix->GetFlattened()[idx_comb];
+//         }
+//     }
+// }
+
+// __global__ void find_nonzero(double* matrix, int size, int rowId, double* outId){
+//     int colId = threadIdx.x;
+//     int num = matrix[size*rowId+colId];
+//     if(num != 0.0){
+//         outId[colId] = (double) colId;
+//     } else{
+//         outId[colId] = 1000;
+//     }
+// }
+
+
+/**
+ * Prevent divide by zero error in fix Row
+ */
 __global__ void pivot(int rowId, int k, double* matrix, int size){
     int colId = threadIdx.x;
-    matrix[size*rowId+colId] = matrix[size*rowId+colId] + matrix[size*k+colId];
+    int double_size = size * 2;
+    matrix[double_size*rowId+colId] = matrix[double_size*rowId+colId] + matrix[double_size*k+colId];
     //matrix[j][i] = matrix[j][i] + matrix[k][i];
 }
 
-__global__ void fixRow(double *matrix, int size, int rowId){
+__global__ void fixRow(double *matrix, int orig_size, int rowId){
     __shared__ double Ri[512]; //ith row of the matrix, cap at 512 for max threads
     __shared__ double Aii; //diagonal element for ith row
 
+    int size = orig_size * 2;
+
     int colId = threadIdx.x;
     Ri[colId] = matrix[size*rowId + colId];
-    //TODO: check
+    //TODO: check8
     Aii = matrix[size*rowId+rowId];
     __syncthreads();
     
@@ -118,13 +192,15 @@ __global__ void fixRow(double *matrix, int size, int rowId){
     matrix[size*rowId+colId] = Ri[colId];
 }
 
-__global__ void fixCol(double *matrix, int size, int colId){
-    int i = threadIdx.x;
+__global__ void fixCol(double *matrix, int orig_size, int colId){
+    int i = threadIdx.x; 
     int j = blockIdx.x;
 
     __shared__ double col[512] ; //colId col
     __shared__ double AColIdj; //jth element of colId row
     __shared__ double colj[512]; //jth column 
+
+    int size = orig_size * 2;
 
     col[i] = matrix[i * size + colId];
     if(col[i] != 0){

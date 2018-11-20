@@ -13,7 +13,7 @@
 Matrix * steepestDescent(Matrix *A_operator, Matrix *b_operator) {
     std::cout << "Starting linear descent" << std::endl;
     // First define a max acceptable error
-    const double error = 1;
+    const double error = .001;
     // matrix_print(A_operator);
     // matrix_print(b_operator);
 
