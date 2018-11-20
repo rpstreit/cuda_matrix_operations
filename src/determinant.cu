@@ -1,10 +1,9 @@
 
-#include <iostream>
 #include <math.h>
 #include "common.h"
 
 #include <stack>
-#include <tuple>
+//#include <tuple>
 
 // sequential implementation of recursive Laplace Expansion
 int determinant_recur(Matrix *A)
@@ -59,105 +58,131 @@ int determinant_recur(Matrix *A)
 	return result;
 }
 
-int determinant_iter(Matrix *A)
-{
-	Matrix * currentMatrix = A;
-	int originalLevel = A->GetNumCols();
-	int level = originalLevel; // represents current level
-	int result;
+// int determinant_iter(Matrix *A)
+// {
+// 	Matrix * currentMatrix = A;
+// 	int originalLevel = A->GetNumCols();
+// 	int level = originalLevel; // represents current level
+// 	int result;
 
-	// base case
-	if (level == 1)
-	{
-		return (*A)[0][0];
-	}
-	else if (level == 2)
-	{
-		return (*A)[0][0] * (*A)[1][1] - (*A)[1][0] * (*A)[0][1];
-	}
+// 	stack.push(std::make_tuple(A, A, 0, 0));
 
-	int parentIndex = 0; // after level is less than 2
+// 	// base case
+// 	if (level == 1)
+// 	{
+// 		return (*A)[0][0];
+// 	}
+// 	else if (level == 2)
+// 	{
+// 		return (*A)[0][0] * (*A)[1][1] - (*A)[1][0] * (*A)[0][1];
+// 	}
 
-	int[] parentIndices = new int[level - 1]; // 0: [2x2] 1: [3x3] 2: [4x4]
-	// parentIndices.reserve(level - 1); // if starting with 4x4, should be 3 levels
-	// for (int i = 0; i < level - 1; i++)
-	// {
-	// 	parentIndices.push_back(0);
-	// }
+// 	int parentIndex = 0; // after level is less than 2
 
-	// pushing <minor matrix, original matrix, col removed, det value>
-	std::stack<std::tuple<Matrix *, Matrix *, int, int>> stack;
-	for (;;)
-	{
-		// add all minor matrices to stack
-		while (level >= 2)
-		{
-			for (int j1 = parentIndices[level - 2]; j1 < level; j1++)
-			{
-				Matrix *minorMatrix = new Matrix(level - 1, level - 1);
+// 	int[] parentIndices = new int[level - 1]; // 0: [2x2] 1: [3x3] 2: [4x4]
+// 	// parentIndices.reserve(level - 1); // if starting with 4x4, should be 3 levels
+// 	// for (int i = 0; i < level - 1; i++)
+// 	// {
+// 	// 	parentIndices.push_back(0);
+// 	// }
 
-				// populate minor matrix
-				for (int i = 1; i < level; i++) // always skip first row
-				{
-					int j2 = 0; 
+// 	// pushing <minor matrix, original matrix, col removed, det value>
+// 	std::stack<std::tuple<Matrix *, Matrix *, int, int>> stack;
+// 	for (;;)
+// 	{
+// 		// add all minor matrices to stack
+// 		while (level >= 2)
+// 		{
+// 			for (int j1 = parentIndices[level - 2]; j1 < level; j1++)
+// 			{
+// 				Matrix *minorMatrix = new Matrix(level - 1, level - 1);
 
-					// for each col, create a new minor matrix with that col removed
-					for (int j = 0; j < level; j++) {
-						if (j == j1)
-							continue;
+// 				// populate minor matrix
+// 				for (int i = 1; i < level; i++) // always skip first row
+// 				{
+// 					int j2 = 0; 
 
-						(*minorMatrix)[i - 1][j2] = (*currentMatrix)[i][j];
-						j2++;
-					}
-				}
+// 					// for each col, create a new minor matrix with that col removed
+// 					for (int j = 0; j < level; j++) {
+// 						if (j == j1)
+// 							continue;
 
-				stack.push(std::make_tuple(minorMatrix, currentMatrix, j1, 0));
-			}
+// 						(*minorMatrix)[i - 1][j2] = (*currentMatrix)[i][j];
+// 						j2++;
+// 					}
+// 				}
 
-			parentIndices[level - 2]++;
-			level--;
-			currentMatrix = minorMatrix; // transfer from 4x4 to 3x3
-		}
+// 				stack.push(std::make_tuple(minorMatrix, currentMatrix, j1, 0));
+// 			}
 
-		// get children, calculate determinant for parent
-		// there should be 3 2x2 minors, 4 3x3s, etc.
-		for (int i = 0; i < topLevel + 1; i++)
-		{
-			std::tuple<Matrix *, Matrix *, int, int> top = stack.top();
-			Matrix * minorMatrix = std::get<0>(top);
-			Matrix * parentMatrix = std::get<1>(top);
-			int colRemoved = std::get<2>(top);
-			int prevDet = std::get<3>(top);
+// 			parentIndices[level - 2]++;
+// 			level--;
+// 			currentMatrix = minorMatrix; // transfer from 4x4 to 3x3
+// 		}
 
-			topLevel = top->GetNumCols();
-			stack.pop();
+// 		// get children, calculate determinant for parent
+// 		// there should be 3 2x2 minors, 4 3x3s, etc.
+// 		for (int i = 0; i < topLevel + 1; i++)
+// 		{
+// 			std::tuple<Matrix *, Matrix *, int, int> top = stack.top();
+// 			Matrix * minorMatrix = std::get<0>(top);
+// 			Matrix * parentMatrix = std::get<1>(top);
+// 			int colRemoved = std::get<2>(top);
+// 			int prevDet = std::get<3>(top);
 
-			// C i,j = (-1)^(i + j) * M i,j
-			int cofactor = pow(-1, 1 + colRemoved); 
-			if (topLevel == 2)
-			{
-				cofactor = cofactor * (*minorMatrix)[0][0] * (*minorMatrix)[1][1] - (*minorMatrix)[1][0] * (*minorMatrix)[0][1];
-			}
-			else
-			{
-				// if greater than 3x3, take from previously calculated det
-				cofactor = cofactor * prevDet;
-			}
+// 			topLevel = top->GetNumCols();
+// 			stack.pop();
 
-			// result has determinant of parent matrix
-			result += cofactor * (*parentMatrix)[1][colRemoved];
-		}
+// 			// C i,j = (-1)^(i + j) * M i,j
+// 			int cofactor = pow(-1, 1 + colRemoved); 
+// 			if (topLevel == 2)
+// 			{
+// 				cofactor = cofactor * (*minorMatrix)[0][0] * (*minorMatrix)[1][1] - (*minorMatrix)[1][0] * (*minorMatrix)[0][1];
+// 			}
+// 			else
+// 			{
+// 				// if greater than 3x3, take from previously calculated det
+// 				cofactor = cofactor * prevDet;
+// 			}
 
-		// get parent, set parent with determinant value
-		std::tuple<Matrix *, Matrix *, int, int> top = stack.top();
-		std::get<3>(top) = result;
+// 			// result has determinant of parent matrix
+// 			result += cofactor * (*parentMatrix)[1][colRemoved];
+// 		}
 
-		level += 2; // need to return back to parent, (return from 2x2 to 3x3)
+// 		// get parent, set parent with determinant value
+// 		std::tuple<Matrix *, Matrix *, int, int> top = stack.top();
+// 		std::get<3>(top) = result;
+
+// 		level += 2; // need to return back to parent, (return from 2x2 to 3x3)
 		
-		// finished
-		if (parentIndices[originalLevel - 1] == originalLevel + 2)
-		{
-			break;
-		}
-	}
-}
+// 		// finished
+// 		if (parentIndices[originalLevel - 1] == originalLevel + 2)
+// 		{
+// 			std::tuple<Matrix *, Matrix *, int, int> top = stack.top();
+// 			return std::get<3>(top);
+// 		}
+// 	}
+// }
+
+// int determinant_tree(Matrix *A)
+// {
+
+// }
+
+// class TreeNode
+// {
+// 	public: 
+// 		TreeNode *_parent;
+// 		Matrix *_mat;
+
+// 	TreeNode()
+// 	{
+
+// 	}
+
+// 	TreeNode(TreeNode *parent, Matrix *mat)
+// 	{
+// 		_parent = parent;
+// 		_mat = mat;
+// 	}
+// }
