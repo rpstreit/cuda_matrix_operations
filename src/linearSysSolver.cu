@@ -10,8 +10,8 @@ Matrix * steepestDescent(Matrix *A_operator, Matrix *b_operator) {
     Matrix *x_next;
     Matrix *d_vector;
     // Allocate all intermediate matrices required
-    Matrix * A_xk_1 = new Matrix(A_operator->GetNumRows(), b_operator->GetNumCols());
-    Matrix * A_dk_1 = new Matrix(A_operator->GetNumRows(), b_operator->GetNumCols());
+    Matrix * A_xk_1 = new Matrix(A_operator->GetNumRows(), 1);
+    Matrix * A_dk_1 = new Matrix(A_operator->GetNumRows(), 1);
     Matrix * dk_1_A_dk_1 = new Matrix(1, 1);
 
     do {
@@ -25,8 +25,7 @@ Matrix * steepestDescent(Matrix *A_operator, Matrix *b_operator) {
         double dk_1sq = pow(norm(d_vector), 2);
 
         matrix_multiply(A_operator, d_vector, A_dk_1);
-        matrix_multiply(d_vector, A_dk_1, dk_1_A_dk_1);    
-        double denominator = (*dk_1_A_dk_1)[0][0];
+        double denominator = dot_product(d_vector, A_dk_1, dk_1_A_dk_1);    
 
         x_next = &(*x_current + (*d_vector * (dk_1sq / denominator)));
         delete x_current;
