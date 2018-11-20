@@ -17,7 +17,7 @@ def get_upper(n):
     matrix = np.zeros((n, n))
     for i in range(n):
         for j in range(i, n):
-            val = np.random.random_sample() * float(np.random.randint(-10000, 10000))
+            val = np.random.random_sample() #* float(np.random.randint(-10000, 10000))
             if i == j:
                 while val == 0:
                     val = np.random.random_sample() * float(np.random.randint(-10000, 10000))
