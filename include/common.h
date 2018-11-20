@@ -74,5 +74,6 @@ double dot_product(Matrix *vec1, Matrix *vec2);
 
 void matrix_print(Matrix *A);
 
+double norm(Matrix *vec);
 
 #endif
