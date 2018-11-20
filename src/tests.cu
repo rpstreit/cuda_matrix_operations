@@ -1,6 +1,7 @@
 
 #include <cstdarg>
 #include <iostream>
+#include <cmath>
 
 #include "tests.h"
 #include "common.h"
@@ -198,6 +199,17 @@ int linear_solve_verify(int argc, Matrix **argv)
   Matrix * b_operator = argv[1];
   matrix_print(b_operator);
 
+  Matrix * output1 = steepestDescent(A_operator, b_operator);
+  Matrix * x_star = new Matrix(b_operator->GetNumRows(), b_operator->GetNumCols()); 
+  matrix_multiply_cpu(A_operator, output1, x_star);
+  bool ok = true;
+  for(int i=0; i<x_star->GetNumRows; i++) {
+    if(abs(x_star->GetFlattened()[i] - b_operator->GetFlattened()[i]) > .1)
+      ok = false;
+  }
+
+  Matrix * output2 = conjugateDirection(A_operator, b_operator);
+  return ok ? 0 : 1;
   // Matrix * combined_eliminator = new Matrix(A_operator->GetNumRows(), A_operator->GetNumCols() + 1);
   // for(int i=0; i<A_operator->GetNumRows(); i++) {
   //   for(int j=0; j<A_operator->GetNumCols(); j++) {
@@ -211,8 +223,6 @@ int linear_solve_verify(int argc, Matrix **argv)
 
   // matrix_print(combined_eliminator);
 
-  
-  return 0;
 }
 
 int determinant_verify(int argc, Matrix **argv)
