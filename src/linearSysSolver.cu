@@ -176,13 +176,13 @@ std::vector<Matrix *> constructAConjugates(Matrix * A_operator) {
             matrix_multiply(pj_t_A, p_vectors[k+1], pj_t_A_pk);
 
             // final value of the numerator
-            double numerator = (*pj_t_A_pk)[0][0];
+            double numerator = pj_t_A_pk->GetFlattened()[0];
 
             // Get (Pj transpose * A) * Pj
             matrix_multiply(pj_t_A, p_vectors[j], pj_t_A_pj);
             
             // final value of the denominator
-            double denominator = (*pj_t_A_pj)[0][0];
+            double denominator = pj_t_A_pj->GetFlattened()[0];
 
             double multiplier = numerator / denominator;
 
