@@ -22,6 +22,14 @@ __global__ void kmatrix_rowswap(Matrix *A, int row1, int row2);
 __global__ void kmatrix_subdiagonal_rowswap(Matrix *A, int row1, int row2);
 __global__ void kmatrix_subtract(Matrix *A, Matrix *B, Matrix *C);
 __global__ void kmatrix_add(Matrix *A, Matrix *B, Matrix *C);
+__global__ void kmatrix_subdiagonal_writecolumn(Matrix *dest, Matrix *src, int col);
+
+void matrix_subdiagonal_writecolumn(Matrix *dest, Matrix *src, int col)
+{
+  int num_blocks = (dest->GetNumRows() - col - 1 + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+  kmatrix_subdiagonal_writecolumn<<<num_blocks, THREADS_PER_BLOCK>>>(dest, src, col);
+  cudaDeviceSynchronize(); 
+}
 
 void matrix_rowswap(Matrix *A, int row1, int row2)
 {
@@ -50,7 +58,7 @@ void matrix_getelementarymatrix(Matrix *A, Matrix *result, int col)
 void matrix_invertelementarymatrix(Matrix *A, Matrix *result, int col)
 {
   result->ToIdentity();
-  int num_blocks = (A->GetNumRows() - col + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+  int num_blocks = (A->GetNumRows() - col - 1 + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
   kmatrix_invertelementarymatrix<<<num_blocks, THREADS_PER_BLOCK>>>(A, result, col);
   cudaDeviceSynchronize();
 }
@@ -247,6 +255,17 @@ void matrix_add(Matrix *A, Matrix *B, Matrix *C)
   cudaDeviceSynchronize();
 }
 
+__global__ void kmatrix_subdiagonal_writecolumn(Matrix *dest, Matrix *src, int col)
+{
+  int idx = threadIdx.x + blockIdx.x * blockDim.x;
+  bool past_length = idx < dest->GetNumRows() - col - 1? false : true;
+
+  if (!past_length)
+  {
+    (*dest)[col + idx + 1][col] = (*src)[col + idx + 1][col];
+  }
+}
+
 __global__ void kmatrix_rowswap(Matrix *A, int row1, int row2)
 {
  	int idx = threadIdx.x + blockIdx.x * blockDim.x;
@@ -286,7 +305,7 @@ __global__ void kmatrix_subdiagonal_rowswap(Matrix *A, int row1, int row2)
 {
   int min = row1 < row2 ? row1 : row2;
  	int idx = threadIdx.x + blockIdx.x * blockDim.x;
-	bool past_length = idx <= min ? false : true;
+	bool past_length = idx < min ? false : true;
 
   if (!past_length)
   {
@@ -299,11 +318,11 @@ __global__ void kmatrix_subdiagonal_rowswap(Matrix *A, int row1, int row2)
 __global__ void kmatrix_invertelementarymatrix(Matrix *A, Matrix *result, int col)
 {
  	int idx = threadIdx.x + blockIdx.x * blockDim.x;
-	bool past_length = idx < result->GetNumRows() - col ? false : true;
+	bool past_length = idx < result->GetNumRows() - col - 1? false : true;
 
-  if (!past_length && idx != 0)
+  if (!past_length)
   {
-    (*result)[col + idx][col] = (*A)[col + idx][col] * -1.f;
+    (*result)[col + idx + 1][col] = (*A)[col + idx + 1][col] * -1.f;
   }
 }
 

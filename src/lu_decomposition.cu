@@ -36,7 +36,7 @@ void lu_decomposition(Matrix *A, Matrix *L, Matrix *U, Matrix *P)
     int idx;
     double max = reduce_absmaxidx(&column_slice[i], rows - i, &idx); // O(log(rows - i)) <= O(log(rows))
     idx = idx + i;
-//    std::cout << "col " << i << ", max: " << max << "@row " << idx;
+    std::cout << "col " << i << ", max: " << max << "@row " << idx;
 
     if (i != idx)
     {
@@ -45,27 +45,30 @@ void lu_decomposition(Matrix *A, Matrix *L, Matrix *U, Matrix *P)
       matrix_subdiagonal_rowswap(L, i, idx);
     }
 
+    // I reuse pointers in ways that don't match the names below
+    // just to save on copies
     // Update U
     matrix_getelementarymatrix(U, L_intermediate, i);
-//    std::cout << "elementary matrix for col " << i << ": " << std::endl;
-//    matrix_print(L_intermediate);
-
-    // Update L
+    std::cout << "elementary matrix for col " << i << ": " << std::endl;
+    matrix_print(L_intermediate);
     matrix_multiply(L_intermediate, U, U_intermediate);
     matrix_copy(U, U_intermediate);
+
+    // Update L
     matrix_invertelementarymatrix(L_intermediate, P_intermediate, i);
-    P_acc->ToIdentity();
-    matrix_subtract(P_intermediate, P_acc, L_intermediate);
-    matrix_add(L, L_intermediate, L);
+    std::cout << "\ninverted elementary matrix:" << std::endl;
+    matrix_print(P_intermediate);
 
-//    std::cout << "\nCurr U:" << std::endl;
-//    matrix_print(U);
+    matrix_subdiagonal_writecolumn(L, P_intermediate, i);
 
-//    std::cout << "\nCurr P:" << std::endl;
-//    matrix_print(P);
+    std::cout << "\nCurr U:" << std::endl;
+    matrix_print(U);
 
-//    std::cout << "\nCurr L:" << std::endl;
-//    matrix_print(L);
+    std::cout << "\nCurr P:" << std::endl;
+    matrix_print(P);
+
+    std::cout << "\nCurr L:" << std::endl;
+    matrix_print(L);
   }
   
   delete U_intermediate;
