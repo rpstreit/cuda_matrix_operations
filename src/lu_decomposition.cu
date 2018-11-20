@@ -8,6 +8,20 @@
 // Assumes that A->GetNumRows() >= A->GetNumCols()
 void lu_decomposition(Matrix *A, Matrix *L, Matrix *U, Matrix *P)
 {
+  if (A->GetNumRows() < A->GetNumCols())
+  {
+    std::cerr << "lu_decomposition: matrix dimensions on A are ill formed for LU Decomposition" << std::endl;
+    exit(EXIT_FAILURE);
+  }
+  if (A->GetNumRows() != L->GetNumRows()
+      || A->GetNumRows() != U->GetNumRows()
+      || A->GetNumRows() != P->GetNumRows()
+      || A->GetNumCols() != U->GetNumCols()
+      || L->GetNumRows() != L->GetNumCols()
+      || P->GetNumRows() != P->GetNumCols())
+  {
+    std::cerr << "lu_decomposition: matrix dimensions of inputs are mismatched" << std::endl;
+  }
   double *column_slice;
   P->ToIdentity();
   L->ToIdentity();

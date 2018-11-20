@@ -113,6 +113,13 @@ void matrix_slicecolumn(Matrix *A, double *slice, int col_idx)
 // Outpus: Resulting multiply in result
 void matrix_multiply(Matrix *A, Matrix *B, Matrix *result)
 { 
+  if (A->GetNumCols() != B->GetNumRows()
+      || A->GetNumRows() != result->GetNumRows()
+      || B->GetNumCols() != result->GetNumCols())
+  {
+    std::cerr << "error: matrix_multiply input/output dimensions are inconsistent" << std::endl;
+    exit(EXIT_FAILURE);
+  }
   double *inter1, *inter2;
 
   int rrows = A->GetNumRows();
@@ -140,7 +147,7 @@ cudaDeviceSynchronize();
 //    }
 //    std::cout << " ]\n";
 //  }
-//
+
   num_blocks = (rdepth + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK * rrows * rcols;
   cudaMalloc((void **) &inter2, rrows * rdepth * rcols * sizeof(double));
   for(;;)
@@ -204,14 +211,17 @@ bool matrix_equals(Matrix *A, Matrix *B, double error)
 {
   int i, j;
 
+  cudaDeviceSynchronize();
   if (A->GetNumRows() != B->GetNumRows()
    || A->GetNumCols() != B->GetNumCols())
   {
     return false;
   }
 
+  cudaDeviceSynchronize();
   for (i = 0; i < A->GetNumRows(); ++i)
   {
+    cudaDeviceSynchronize();
     for (j = 0; j < A->GetNumCols(); ++j)
     {
       int diff = (*A)[i][j] - (*B)[i][j];
@@ -221,6 +231,7 @@ bool matrix_equals(Matrix *A, Matrix *B, double error)
         return false;
       }
     }
+    cudaDeviceSynchronize();
   }
 
   return true;
@@ -531,21 +542,17 @@ __global__ void kmatrix_multiply_writeresult(double *raw, Matrix *result)
 __global__ void kmatrix_multiply_reducesums(double *in, int depth, double *out)
 {
   int tid = threadIdx.x;
-  int blocksPerDepth = (depth + blockDim.x - 1) / blockDim.x;
-  int idx_2d = blockIdx.x / blocksPerDepth;
-  int base = idx_2d * depth;
-  int idx, block_idx, depth_idx;
-  int block_in_depth;
- 
-  block_in_depth = blockIdx.x % blocksPerDepth;
-  block_idx = base + block_in_depth * blocksPerDepth;
-  depth_idx = block_in_depth * blockDim.x + threadIdx.x;
+  int blocks_per_depth = (depth + blockDim.x - 1) / blockDim.x;
+  int cubby = (blockIdx.x / blocks_per_depth) * depth;
+  int block_in_depth = blockIdx.x % blocks_per_depth;
+  int cubby_idx = block_in_depth * blockDim.x + threadIdx.x;
+  int idx = 0;
+
   __shared__ double s_data[THREADS_PER_BLOCK];
 
-  if (depth_idx < depth)
+  if (cubby_idx < depth)
   {
-    idx = block_idx + threadIdx.x;
-
+    idx = cubby + cubby_idx;
     s_data[threadIdx.x] = in[idx];
   }
   else
@@ -553,18 +560,15 @@ __global__ void kmatrix_multiply_reducesums(double *in, int depth, double *out)
     s_data[threadIdx.x] = 0.f;
   }
   __syncthreads();
-  if (depth_idx < depth)
+  for (unsigned int i = blockDim.x / 2; i > 0; i >>= 1)
   {
-		for (unsigned int i = blockDim.x / 2; i > 0; i >>= 1)
-		{
-			if (threadIdx.x < i && (depth_idx + i) < depth)
-			{
-				s_data[tid] = s_data[tid] + s_data[tid + i];
-      }
+    if (tid < i && (cubby_idx + i) < depth)
+    {
+      s_data[tid] = s_data[tid] + s_data[tid + i];
+    }
 
-			__syncthreads(); // wait for round to finish
-		}	
-  }
+    __syncthreads(); // wait for round to finish
+  }	
 	if (threadIdx.x == 0)
 	{
 		out[blockIdx.x] = s_data[0];

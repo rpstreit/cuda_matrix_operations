@@ -56,8 +56,10 @@ int matmul_verify(int argc, Matrix **argv)
   matrix_multiply_cpu(A, B, result_cpu);
   matrix_multiply(A, B, result_gpu);
 
+  cudaDeviceSynchronize();
   int result = matrix_equals(result_cpu, result_gpu, ERROR) ? 0 : 1;
 
+  cudaDeviceSynchronize();
   delete result_cpu;
   delete result_gpu;
 
