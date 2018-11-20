@@ -8,6 +8,8 @@
 #include "matrix.h"
 #include "lu_decomposition.h"
 #include "linearSysSolver.h"
+#include "determinant.h"
+#include "matrix_inverse.h"
 
 int matmul_run(int argc, Matrix **argv) 
 {
@@ -188,6 +190,7 @@ int determinant_recur_run(int argc, Matrix **argv)
   std::cout << determinant << std::endl;
 
   delete A_operator;
+  return 0;
 }
 
 int linear_solve_verify(int argc, Matrix **argv)
@@ -196,6 +199,25 @@ int linear_solve_verify(int argc, Matrix **argv)
 }
 
 int determinant_verify(int argc, Matrix **argv)
+{
+  return 0;
+}
+
+int GJE_inverse_run(int argc, Matrix **argv)
+{
+  if(argc != 1)
+  {
+    std::cerr << "error: GJE_inverse_run requires 1 argument" << std::endl;
+  }
+  Matrix * A_operator = argv[0];
+  matrix_print(A_operator);
+
+  Matrix * output = GJE_inverse(A_operator);
+  matrix_print(output);
+  return 0;
+}
+
+int inverse_verify(int argc, Matrix **argv)
 {
   return 0;
 }

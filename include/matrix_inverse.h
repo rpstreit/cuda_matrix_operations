@@ -1,0 +1,1 @@
+Matrix* GJE_inverse(Matrix* matrix);
