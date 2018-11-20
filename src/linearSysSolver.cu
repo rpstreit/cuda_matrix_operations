@@ -112,20 +112,17 @@ Matrix * steepestDescent(Matrix *A_operator, Matrix *b_operator) {
         matrix_multiply_scalar(d_vector_scalar, d_vector, scalar);
 
         matrix_add(x_current, d_vector_scalar, x_next);
-        std::cout << "current X:" << std::endl;
-        matrix_print(x_next);
+        // std::cout << "current X:" << std::endl;
+        // matrix_print(x_next);
         // Update x
         
         x_current = x_next;
 
-        std::cout << std::endl;
-        std::cout << std::endl;
-        std::cout << std::endl;
         // Limit the number of iterations
-        if(count++ > 5000) {
+        /*if(count++ > 5000) {
             std::cout << "Descent iteration limit reached" << std::endl;
             break;
-        }
+        }*/
     } while(norm(d_vector) > error);
 
     delete x0;
@@ -237,7 +234,7 @@ Matrix * conjugateDirection(Matrix * A_operator, Matrix * b_operator) {
         matrix_multiply(pk_t, r0, pk_t_r0);
         int numerator = (*pk_t_r0)[0][0];
 
-        std::cout << "Debug" << std::endl;
+        // std::cout << "Debug" << std::endl;
         matrix_multiply(A_operator, A_conjugates[k], A_pk);
         matrix_multiply(pk_t, A_pk, pk_t_A_pk);
         ak = (*pk_t_A_pk)[0][0];
