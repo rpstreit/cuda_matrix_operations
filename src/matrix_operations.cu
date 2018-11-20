@@ -22,6 +22,7 @@ __global__ void kmatrix_rowswap(Matrix *A, int row1, int row2);
 __global__ void kmatrix_subdiagonal_rowswap(Matrix *A, int row1, int row2);
 __global__ void kmatrix_subtract(Matrix *A, Matrix *B, Matrix *C);
 __global__ void kmatrix_add(Matrix *A, Matrix *B, Matrix *C);
+__global__ void kmultiply_scalar(Matrix *output, Matrix *input, double scale);
 __global__ void kmatrix_subdiagonal_writecolumn(Matrix *dest, Matrix *src, int col);
 
 void matrix_subdiagonal_writecolumn(Matrix *dest, Matrix *src, int col)
@@ -266,6 +267,24 @@ void matrix_add(Matrix *A, Matrix *B, Matrix *C)
   cudaDeviceSynchronize();
 }
 
+void matrix_multiply_scalar(Matrix *output, Matrix *input, double scale) {
+  int num_blocks = (input->GetNumRows() * input->GetNumCols() + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+  // std::cout << "blocks are:" << num_blocks << std::endl;
+  kmultiply_scalar<<<num_blocks, THREADS_PER_BLOCK>>>(output, input, scale);
+  cudaDeviceSynchronize();
+}
+
+__global__ void kmultiply_scalar(Matrix *output, Matrix *input, double scale)
+{
+  int idx = threadIdx.x + blockIdx.x * blockDim.x;
+  double * outputM = output->GetFlattened();
+  double * inputM = input->GetFlattened();
+  if(idx < (input->GetNumCols() * input->GetNumRows())) 
+  {
+    outputM[idx] = inputM[idx] * scale;
+  }
+}
+
 __global__ void kmatrix_subdiagonal_writecolumn(Matrix *dest, Matrix *src, int col)
 {
   int idx = threadIdx.x + blockIdx.x * blockDim.x;
@@ -279,8 +298,8 @@ __global__ void kmatrix_subdiagonal_writecolumn(Matrix *dest, Matrix *src, int c
 
 __global__ void kmatrix_rowswap(Matrix *A, int row1, int row2)
 {
- 	int idx = threadIdx.x + blockIdx.x * blockDim.x;
-	bool past_length = idx < A->GetNumCols() ? false : true;
+  int idx = threadIdx.x + blockIdx.x * blockDim.x;
+  bool past_length = idx < A->GetNumCols() ? false : true;
 
   if (!past_length)
   {
@@ -292,8 +311,8 @@ __global__ void kmatrix_rowswap(Matrix *A, int row1, int row2)
 
 __global__ void kmatrix_subtract(Matrix *A, Matrix *B, Matrix *C)
 {
- 	int idx = threadIdx.x + blockIdx.x * blockDim.x;
-	bool past_length = idx < C->GetNumRows() * C->GetNumCols() ? false : true;
+  int idx = threadIdx.x + blockIdx.x * blockDim.x;
+  bool past_length = idx < C->GetNumRows() * C->GetNumCols() ? false : true;
 
   if (!past_length)
   {
@@ -303,8 +322,8 @@ __global__ void kmatrix_subtract(Matrix *A, Matrix *B, Matrix *C)
 
 __global__ void kmatrix_add(Matrix *A, Matrix *B, Matrix *C)
 {
- 	int idx = threadIdx.x + blockIdx.x * blockDim.x;
-	bool past_length = idx < C->GetNumRows() * C->GetNumCols() ? false : true;
+  int idx = threadIdx.x + blockIdx.x * blockDim.x;
+  bool past_length = idx < C->GetNumRows() * C->GetNumCols() ? false : true;
 
   if (!past_length)
   {
@@ -315,8 +334,8 @@ __global__ void kmatrix_add(Matrix *A, Matrix *B, Matrix *C)
 __global__ void kmatrix_subdiagonal_rowswap(Matrix *A, int row1, int row2)
 {
   int min = row1 < row2 ? row1 : row2;
- 	int idx = threadIdx.x + blockIdx.x * blockDim.x;
-	bool past_length = idx < min ? false : true;
+  int idx = threadIdx.x + blockIdx.x * blockDim.x;
+  bool past_length = idx < min ? false : true;
 
   if (!past_length)
   {
@@ -328,8 +347,8 @@ __global__ void kmatrix_subdiagonal_rowswap(Matrix *A, int row1, int row2)
 
 __global__ void kmatrix_invertelementarymatrix(Matrix *A, Matrix *result, int col)
 {
- 	int idx = threadIdx.x + blockIdx.x * blockDim.x;
-	bool past_length = idx < result->GetNumRows() - col - 1? false : true;
+  int idx = threadIdx.x + blockIdx.x * blockDim.x;
+  bool past_length = idx < result->GetNumRows() - col - 1? false : true;
 
   if (!past_length)
   {
@@ -339,8 +358,8 @@ __global__ void kmatrix_invertelementarymatrix(Matrix *A, Matrix *result, int co
 
 __global__ void kmatrix_getelementarymatrix(Matrix *A, Matrix *result, int col)
 {
- 	int idx = threadIdx.x + blockIdx.x * blockDim.x;
-	bool past_length = idx < result->GetNumRows() - col ? false : true;
+  int idx = threadIdx.x + blockIdx.x * blockDim.x;
+  bool past_length = idx < result->GetNumRows() - col ? false : true;
 
   if (!past_length && idx != 0)
   {
@@ -360,19 +379,19 @@ __global__ void kmatrix_getelementarymatrix(Matrix *A, Matrix *result, int col)
  */
 double dot_product(Matrix *vec1, Matrix *vec2) 
 {
-  std::cout << "Performing dot product" << std::endl;
+  // std::cout << "Performing dot product" << std::endl;
   // First Transpose vector 2 for matrix multiplication
   int length = vec1->GetNumRows();
   Matrix *temp = new Matrix(1, length);
   matrix_transpose(vec2, temp);
-  std::cout << "Temp:" << std::endl;
-  matrix_print(temp);
+  // std::cout << "Temp:" << std::endl;
+  // matrix_print(temp);
 
   // Perform the multiplication
   Matrix *result = new Matrix(1, 1);
   matrix_multiply(temp, vec1, result);
-  std::cout << "Result:" << std::endl;
-  matrix_print(result);
+  // std::cout << "Result:" << std::endl;
+  // matrix_print(result);
 
   // Resulting 1x1 matrix holds the dot product
   double prod = *(result->GetFlattened());
@@ -398,10 +417,16 @@ double norm(Matrix *vector)
   } else {
     length = vector->GetNumRows();
   }
+  // std::cout << "Inside norm function" << std::endl;
+  // matrix_print(vector);
+  kvector_square<<<(length + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK, THREADS_PER_BLOCK>>>(vector, output_vector);
+  cudaDeviceSynchronize();
+  // matrix_print(output_vector);
+  // matrix_print(output_vector);
+  double addedSum = reduce(output_vector->GetFlattened(), length, ADD);
+  // std::cout << "Inside Added sum " << addedSum << std::endl;
 
-  kvector_square<<<length / THREADS_PER_BLOCK, THREADS_PER_BLOCK>>>(vector, output_vector);
-
-  double normal =  sqrt(reduce(output_vector->GetFlattened(), length, ADD));
+  double normal =  sqrt(addedSum);
   delete output_vector;
   return normal;
 }

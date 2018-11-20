@@ -149,6 +149,8 @@ int linear_descent_run(int argc, Matrix **argv)
   delete A_operator;
   delete b_operator;
   delete output;
+
+  return 0;
 }
 
 int conjugate_direction_run(int argc, Matrix **argv)
@@ -169,6 +171,8 @@ int conjugate_direction_run(int argc, Matrix **argv)
   delete A_operator;
   delete b_operator;
   delete output;
+
+  return 0;
 }
 
 int determinant_recur_run(int argc, Matrix **argv)

@@ -115,8 +115,8 @@ double reduce(double *data, int length, Reduction op_type)
 		}
 	}
 	
-	int h_out;
-	cudaMemcpy(&h_out, d_out, sizeof(int), cudaMemcpyDeviceToHost);
+	double h_out;
+	cudaMemcpy(&h_out, d_out, sizeof(double), cudaMemcpyDeviceToHost);
 	
 	cudaFree(d_out);
 
@@ -145,6 +145,10 @@ __global__ void kreduce_add(double *g_in, double *g_out, int length)
 	if (idx < length)
 	{
 		s_data[tid] = g_in[idx];
+	}
+	else
+	{
+		s_data[tid] = 0.f;
 	}
 	__syncthreads(); // wait for every thing to get loaded into
 										// shared memory for this block
