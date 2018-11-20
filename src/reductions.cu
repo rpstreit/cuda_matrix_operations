@@ -233,11 +233,11 @@ __global__ void kreduce_max(double *g_in, double *g_out, int length, int *idx_in
 		{
 			if (tid < i && (idx + i) < length)
 			{
-        int me, them;
+        double me, them;
         if (abs)
         {
           me = s_data[tid] < 0 ? -1.f * s_data[tid] : s_data[tid];
-          them = s_data[tid + i] < 0 ? -1.f * s_data[tid + i] : s_data[tid + 1];
+          them = s_data[tid + i] < 0 ? -1.f * s_data[tid + i] : s_data[tid + i];
         }
         else
         {
