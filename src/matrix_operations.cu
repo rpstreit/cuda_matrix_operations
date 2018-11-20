@@ -19,11 +19,22 @@ __global__ void kmatrix_copy(Matrix *dest, Matrix *src);
 __global__ void kmatrix_getelementarymatrix(Matrix *A, Matrix *result, int col);
 __global__ void kmatrix_invertelementarymatrix(Matrix *A, Matrix *result, int col);
 __global__ void kmatrix_rowswap(Matrix *A, int row1, int row2);
+__global__ void kmatrix_subdiagonal_rowswap(Matrix *A, int row1, int row2);
+__global__ void kmatrix_subtract(Matrix *A, Matrix *B, Matrix *C);
+__global__ void kmatrix_add(Matrix *A, Matrix *B, Matrix *C);
 
 void matrix_rowswap(Matrix *A, int row1, int row2)
 {
   int num_blocks = (A->GetNumCols() + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
   kmatrix_rowswap<<<num_blocks, THREADS_PER_BLOCK>>>(A, row1, row2);
+  cudaDeviceSynchronize(); 
+}
+
+void matrix_subdiagonal_rowswap(Matrix *A, int row1, int row2)
+{
+  int min = row1 < row2 ? row1 : row2;
+  int num_blocks = (min + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+  kmatrix_subdiagonal_rowswap<<<num_blocks, THREADS_PER_BLOCK>>>(A, row1, row2);
   cudaDeviceSynchronize(); 
 }
 
@@ -104,46 +115,46 @@ void matrix_multiply(Matrix *A, Matrix *B, Matrix *result)
 
   cudaMalloc((void **) &inter1, rrows * rdepth * rcols * sizeof(double));
   kmatrix_multiply_mapsums<<<num_blocks, THREADS_PER_BLOCK>>>(A, B, inter1);
-  double h_inter1[rrows * rdepth * rcols];
 cudaDeviceSynchronize();
-  cudaMemcpy(h_inter1, inter1, rrows * rdepth * rcols *sizeof(double), cudaMemcpyDeviceToHost);
-  for (int i = 0; i < rrows; ++i)
-  {
-    std::cout<<"[";
-    for (int j = 0; j < rcols; ++j)
-    {
-      std::cout << " {";
-      for (int k = 0; k < rdepth; ++k)
-      {
-        std::cout << " " << h_inter1[i * rcols * rdepth + j * rdepth + k];
-      }
-      std::cout << " }";
-    }
-    std::cout << " ]\n";
-  }
-
+//  double h_inter1[rrows * rdepth * rcols];
+//  cudaMemcpy(h_inter1, inter1, rrows * rdepth * rcols *sizeof(double), cudaMemcpyDeviceToHost);
+//  for (int i = 0; i < rrows; ++i)
+//  {
+//    std::cout<<"[";
+//    for (int j = 0; j < rcols; ++j)
+//    {
+//      std::cout << " {";
+//      for (int k = 0; k < rdepth; ++k)
+//      {
+//        std::cout << " " << h_inter1[i * rcols * rdepth + j * rdepth + k];
+//      }
+//      std::cout << " }";
+//    }
+//    std::cout << " ]\n";
+//  }
+//
   num_blocks = (rdepth + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK * rrows * rcols;
   cudaMalloc((void **) &inter2, rrows * rdepth * rcols * sizeof(double));
   for(;;)
   {
-    std::cout << "num_blocks: " << num_blocks << std::endl;
+    //std::cout << "num_blocks: " << num_blocks << std::endl;
     kmatrix_multiply_reducesums<<<num_blocks, THREADS_PER_BLOCK>>>(inter1, rdepth, inter2);
     cudaDeviceSynchronize();
-    cudaMemcpy(h_inter1, inter2, rrows *(num_blocks/(rrows*rcols))* rcols *sizeof(double), cudaMemcpyDeviceToHost);
-    for (int i = 0; i < rrows; ++i)
-    {
-      std::cout<<"[";
-      for (int j = 0; j < rcols; ++j)
-      {
-        std::cout << " {";
-        for (int k = 0; k < (num_blocks/(rrows*rcols)) ; ++k)
-        {
-          std::cout << " " << h_inter1[i * rcols * (num_blocks/(rrows*rcols)) + j * (num_blocks/(rrows*rcols)) + k];
-        }
-        std::cout << " }";
-      }
-      std::cout << " ]\n";
-    }
+//    cudaMemcpy(h_inter1, inter2, rrows *(num_blocks/(rrows*rcols))* rcols *sizeof(double), cudaMemcpyDeviceToHost);
+//    for (int i = 0; i < rrows; ++i)
+//    {
+//      std::cout<<"[";
+//      for (int j = 0; j < rcols; ++j)
+//      {
+//        std::cout << " {";
+//        for (int k = 0; k < (num_blocks/(rrows*rcols)) ; ++k)
+//        {
+//          std::cout << " " << h_inter1[i * rcols * (num_blocks/(rrows*rcols)) + j * (num_blocks/(rrows*rcols)) + k];
+//        }
+//        std::cout << " }";
+//      }
+//      std::cout << " ]\n";
+//    }
     if (num_blocks == rrows * rcols)
     {
       break;
@@ -222,12 +233,62 @@ void matrix_transpose(Matrix *mat, Matrix *result)
   cudaDeviceSynchronize();
 }
 
+void matrix_subtract(Matrix *A, Matrix *B, Matrix *C)
+{
+	int num_blocks = (C->GetNumRows() * C->GetNumCols() + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+  kmatrix_subtract<<<num_blocks, THREADS_PER_BLOCK>>>(A, B, C);
+  cudaDeviceSynchronize();
+}
+
+void matrix_add(Matrix *A, Matrix *B, Matrix *C)
+{
+	int num_blocks = (C->GetNumRows() * C->GetNumCols() + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+  kmatrix_add<<<num_blocks, THREADS_PER_BLOCK>>>(A, B, C);
+  cudaDeviceSynchronize();
+}
+
 __global__ void kmatrix_rowswap(Matrix *A, int row1, int row2)
 {
  	int idx = threadIdx.x + blockIdx.x * blockDim.x;
 	bool past_length = idx < A->GetNumCols() ? false : true;
 
-  if (!past_length && idx != 0)
+  if (!past_length)
+  {
+    double temp = (*A)[row1][idx];
+    (*A)[row1][idx] = (*A)[row2][idx];
+    (*A)[row2][idx] = temp;
+  }
+}
+
+__global__ void kmatrix_subtract(Matrix *A, Matrix *B, Matrix *C)
+{
+ 	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	bool past_length = idx < C->GetNumRows() * C->GetNumCols() ? false : true;
+
+  if (!past_length)
+  {
+    C->GetFlattened()[idx] = A->GetFlattened()[idx] - B->GetFlattened()[idx];
+  }
+}
+
+__global__ void kmatrix_add(Matrix *A, Matrix *B, Matrix *C)
+{
+ 	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	bool past_length = idx < C->GetNumRows() * C->GetNumCols() ? false : true;
+
+  if (!past_length)
+  {
+    C->GetFlattened()[idx] = A->GetFlattened()[idx] + B->GetFlattened()[idx];
+  }
+}
+
+__global__ void kmatrix_subdiagonal_rowswap(Matrix *A, int row1, int row2)
+{
+  int min = row1 < row2 ? row1 : row2;
+ 	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	bool past_length = idx <= min ? false : true;
+
+  if (!past_length)
   {
     double temp = (*A)[row1][idx];
     (*A)[row1][idx] = (*A)[row2][idx];
@@ -254,7 +315,7 @@ __global__ void kmatrix_getelementarymatrix(Matrix *A, Matrix *result, int col)
   if (!past_length && idx != 0)
   {
     double pivot = (*A)[col][col];
-    (*result)[col + idx][col] = (*A)[col + idx][col] / pivot;
+    (*result)[col + idx][col] = -1.f * (*A)[col + idx][col] / pivot;
   }
 }
 
@@ -433,7 +494,7 @@ __global__ void kmatrix_slicecolumn(Matrix *A, double *slice, int col_idx)
   int idx = threadIdx.x + blockIdx.x * blockDim.x;
   if (idx < A->GetNumRows())
   {
-    slice[idx] = (*A)[col_idx][idx];
+    slice[idx] = (*A)[idx][col_idx];
   }
 }
 
