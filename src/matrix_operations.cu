@@ -1,8 +1,10 @@
 
 
+#include <math.h>
+#include <iostream>
+
 #include "matrix.h"
 #include "common.h"
-#include <math.h>
 
 __global__ void kmatrix_transpose(Matrix *in, Matrix *out);
 __global__ void kmatrix_multiply(Matrix *A, Matrix *B, Matrix *result);
@@ -102,9 +104,25 @@ void matrix_multiply(Matrix *A, Matrix *B, Matrix *result)
 
   cudaMalloc((void **) &inter1, rrows * rdepth * rcols * sizeof(double));
   kmatrix_multiply_mapsums<<<num_blocks, THREADS_PER_BLOCK>>>(A, B, inter1);
+  double h_inter1[rrows * rdepth * rcols];
   cudaDeviceSynchronize();
+  cudaMemcpy(h_inter1, inter1, rrows * rdepth * rcols *sizeof(double), cudaMemcpyDeviceToHost);
+  for (int i = 0; i < rrows; ++i)
+  {
+    std::cout<<"[";
+    for (int j = 0; j < rcols; ++j)
+    {
+      std::cout << " {";
+      for (int k = 0; k < rdepth; ++k)
+      {
+        std::cout << " " << h_inter1[i * rcols * rdepth + j * rdepth + k];
+      }
+      std::cout << " }";
+    }
+    std::cout << " ]\n";
+  }
 
-  cudaMalloc((void **) &inter2, num_blocks * sizeof(double));
+  cudaMalloc((void **) &inter2, rrows * num_blocks * rcols * sizeof(double));
   num_blocks = (rdepth + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK * rrows * rcols;
   for(;;)
   {
@@ -126,9 +144,51 @@ void matrix_multiply(Matrix *A, Matrix *B, Matrix *result)
 
   num_blocks = (rrows * rcols + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
   kmatrix_multiply_writeresult<<<num_blocks, THREADS_PER_BLOCK>>>(inter2, result);
+  cudaDeviceSynchronize();
 
   cudaFree(inter2);
   cudaFree(inter1);
+}
+
+void matrix_print(Matrix *A)
+{
+  std::cout << "Matrix@" << A << ":\tnum_rows: " << A->GetNumRows() << "\tnum_cols: " << A->GetNumCols() << std::endl;
+  int i, j;
+  for (i = 0; i < A->GetNumRows(); ++i)
+  {
+    std::cout << "[";
+    for (j = 0; j < A->GetNumCols(); ++j)
+    {
+      std::cout << " " << (*A)[i][j];
+    }
+    std::cout << " ]" << std::endl;
+  }
+}
+
+bool matrix_equals(Matrix *A, Matrix *B, double error)
+{
+  int i, j;
+
+  if (A->GetNumRows() != B->GetNumRows()
+   || A->GetNumCols() != B->GetNumCols())
+  {
+    return false;
+  }
+
+  for (i = 0; i < A->GetNumRows(); ++i)
+  {
+    for (j = 0; j < A->GetNumCols(); ++j)
+    {
+      int diff = (*A)[i][j] - (*B)[i][j];
+      diff = diff < 0 ? diff * -1.f : diff;
+      if (diff > error)
+      {
+        return false;
+      }
+    }
+  }
+
+  return true;
 }
 
 // matrix_transpose
@@ -415,7 +475,7 @@ __global__ void kmatrix_multiply_mapsums(Matrix *A, Matrix *B, double *result)
   {
     int row = idx / (B->GetNumCols() * A->GetNumCols());
     int col = (idx / A->GetNumCols()) % B->GetNumCols();
-    int depth = idx % (B->GetNumCols() * A->GetNumCols());
+    int depth = idx % (A->GetNumCols());
 
     result[idx] = (*A)[row][depth] * (*B)[depth][col];
   }

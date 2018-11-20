@@ -11,8 +11,16 @@
 
 // Here is a constant to account for floating
 // precision loss when checking for equality
+
+#ifndef TESTS_H
+#define TESTS_H
+
+#include "matrix.h"
+
 #define ERROR 1e-10
 
-int matmul_run(Matrix *A, ...);
+int matmul_run(int argc, Matrix **argv);
 
-int matmul_verify(Matrix *A, ...);
+int matmul_verify(int argc, Matrix **argv);
+
+#endif
