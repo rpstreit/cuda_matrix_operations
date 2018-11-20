@@ -1,15 +1,36 @@
 #include "matrix.h"
 #include <vector>
+__global__ void kcombine(Matrix* matrix, Matrix* inverse, Matrix* dest, int length);
 __global__ void find_nonzero(double* matrix, int size, int rowId, double* outId);
 __global__ void inverseGJE(int j, intk, Matrix* matrix);
 __global__ void fixRow(Matrix *matrix, int size, int rowId);
 __global__ void fixCol(Matrix *matrix, int size, int colId);
+
+void matrix_inverse::combineInverse(Matrix* matrix, Matrix* inverse, Matrix* dest){
+    int cols = dest->GetNumCols();
+    int rows = dest->GetNumRows();
+
+    int num_blocks = (rows * cols + 512 -1)/512;
+
+    kcombine<<<num_blocks, 512>>>(matrix, inverse, dest);
+    cudaDeviceSynchronize();
+}
 
 //Assume the matrix is an n*n matrix
 void matrix_inverse::GJE_inverse(Matrix* matrix){
     int *size; int* j; int* k;
     int *d_size; int *d_j; int* d_k;
     double *d_row;
+    
+    int row = matrix->GetNumRows();
+    int col = matrix->GetNumCols();
+
+    Matrix *inverse = new Matrix(row, col);
+    matrix_copy(inverse, matrix);
+    inverse->ToInverse();
+
+    Matrix *combination = new Matrix(row * 2, col * 2);
+    combineInverse(matrix, inverse, combintion);
 
     size = (int *)malloc(sizeof(int));
     j = (int *)malloc(sizeof(int));
@@ -24,7 +45,7 @@ void matrix_inverse::GJE_inverse(Matrix* matrix){
     cudaMalloc((void**)*d_row, sizeof(double) * &size);
 
     int n = &size;
-    int flat_matrix = matrix->GetFlattened();
+    int flat_matrix = combination->GetFlattened();
 
     while(&j < &n){
         cudaMemcpy(d_j, j, sizeof(int), cudaMemcpyHostToDevice);
@@ -49,6 +70,24 @@ void matrix_inverse::GJE_inverse(Matrix* matrix){
     matrix_print(matrix);
     free(j); free(size); free(k);
     cudaFree(j); cudaFree(size); cudaFree(k);
+    delete inverse;
+    delete combination;
+}
+
+__global__ void kcombine(Matrix* matrix, Matrix* inverse, Matrix* dest, int length){
+    int idx = threadIdx.x+blockIdx.x*blockDim.x;
+    int half_row = dest->GetNumRows()/2;
+    int half_col = dest->GetNumCols()/2;
+    bool end = idx < dest->GetNumRows() * dest->GetNumCols() ? false : true;
+    
+    if(!past_length){
+        if(threadIdx.x < (blockDim.x / 2)) {
+            dest->GetFlattened()[idx] = matrix->GetFlattened()[idx];
+        }
+        else {
+            dest->GetFlattened()[idx] = identity->GetFlattened()[idx];
+        }
+    }
 }
 
 __global__ void find_nonzero(double* matrix, int size, int rowId, double* outId){
