@@ -5,6 +5,7 @@
 /**
  * Perform steepest descent algorithm on 
  * Ax = b
+ * Extremely inaccurate algorithm
  * @param  A_operator the A (an nxn matrix)
  * @param  b_operator the b (a nx1 vector)
  * @return            an nx1 vector of x
@@ -19,8 +20,7 @@ Matrix * steepestDescent(Matrix *A_operator, Matrix *b_operator) {
     // Construct a vector for the return
     double size = b_operator->GetNumRows();
     Matrix *x0 = new Matrix(size, 1); // make a column vector
-    x0->GetFlattened()[0] = 1;
-    x0->GetFlattened()[1] = 1;
+    matrix_multiply_scalar(x0, b_operator, .01);
 
     Matrix *x_current = x0;
     Matrix *x_next = new Matrix(size, 1);
@@ -138,7 +138,7 @@ Matrix * steepestDescent(Matrix *A_operator, Matrix *b_operator) {
 
 /**
  * Construct n A conjugate vectors
- * @param A_operator    A nxn matrix
+ * @param A_operatA_conjugatesor    A nxn matrix
  * @return              an std::vector of the conjugate vectors
  */
 std::vector<Matrix *> constructAConjugates(Matrix * A_operator) {
@@ -148,12 +148,12 @@ std::vector<Matrix *> constructAConjugates(Matrix * A_operator) {
 
     // Create a linearly independent set
     // The easiest set turns out to be essentially an identity matrix
+
     for(int i=0; i<length; i++) {
         Matrix *temp = new Matrix(length, 1);
         (*temp)[i][0] = 1;
         p_vectors.push_back(temp);
     }
-
     // Allocate all intermediate matrices
     Matrix *pj_t = new Matrix(1, length);
     Matrix *pj_t_A = new Matrix(1, length);
@@ -162,7 +162,7 @@ std::vector<Matrix *> constructAConjugates(Matrix * A_operator) {
     Matrix *pk_pj = new Matrix(length, 1);
     Matrix *pk_pj_scalar = new Matrix(length, 1);
 
-    for(int k=1; k<length; k++) {
+    for(int k=0; k<length-1; k++) {
         for(int j=0; j<k; j++) {
             // get Pj transpose
             matrix_transpose(p_vectors[j], pj_t);
@@ -171,21 +171,21 @@ std::vector<Matrix *> constructAConjugates(Matrix * A_operator) {
             matrix_multiply(pj_t, A_operator, pj_t_A);
 
             // Get (Pj transpose * A) * Pk
-            matrix_multiply(pj_t_A, p_vectors[k], pj_t_A_pk);
+            matrix_multiply(pj_t_A, p_vectors[k+1], pj_t_A_pk);
 
             // final value of the numerator
             double numerator = (*pj_t_A_pk)[0][0];
 
             // Get (Pj transpose * A) * Pj
-            matrix_multiply(pj_t_A, p_vectors[k], pj_t_A_pj);
+            matrix_multiply(pj_t_A, p_vectors[j], pj_t_A_pj);
             
             // final value of the denominator
             double denominator = (*pj_t_A_pj)[0][0];
 
             double multiplier = numerator / denominator;
 
-            matrix_subtract(p_vectors[k], p_vectors[j], pk_pj);
-            matrix_multiply_scalar(p_vectors[k], pk_pj, multiplier);
+            matrix_multiply_scalar(pk_pj_scalar, pk_pj, multiplier);
+            matrix_subtract(p_vectors[k+1], pk_pj_scalar, p_vectors[k+1]);
         }
     }
 
@@ -193,7 +193,9 @@ std::vector<Matrix *> constructAConjugates(Matrix * A_operator) {
     delete pj_t_A;
     delete pj_t_A_pk;
     delete pj_t_A_pj;
-
+    for(int i=0; i<length; i++) {
+        matrix_print(p_vectors[i]);
+    }
     return p_vectors;
 }
 
@@ -207,32 +209,39 @@ std::vector<Matrix *> constructAConjugates(Matrix * A_operator) {
 Matrix * conjugateDirection(Matrix * A_operator, Matrix * b_operator) {
     
     Matrix *x0 = new Matrix(A_operator->GetNumRows(), 1); // make a column vector
+    x0->GetFlattened()[0] = 1;
     Matrix *xcurrent = new Matrix(A_operator->GetNumRows(), 1); // make a column vector
-    
+    int size = A_operator->GetNumRows();
     std::vector<Matrix *> A_conjugates = constructAConjugates(A_operator);
     // we will have our guess of x0 be 0 so that r0 = b
     
     // Allocated intermediate matrices
+    Matrix * A_x0 = new Matrix(size, 1);
+    Matrix * r0 = new Matrix(size, 1);
     Matrix * pk_t = new Matrix(1, A_conjugates[0]->GetNumRows());
     Matrix * pk_t_r0 = new Matrix(1, 1);
-    Matrix * A_pk = new Matrix(A_operator->GetNumCols(), b_operator->GetNumRows());
+    Matrix * A_pk = new Matrix(A_operator->GetNumCols(), 1);
     Matrix * pk_t_A_pk = new Matrix(1, 1);
     Matrix * A_conj_scalar = new Matrix(b_operator->GetNumRows(), 1);
 
     // Limited runtime
     double ak;
     for(int k=0; k < A_operator->GetNumRows(); k++) {
+        // Calculate residue
+        matrix_multiply(A_operator, x0, A_x0);
+        matrix_subtract(b_operator, A_x0, r0);
+
         matrix_transpose(A_conjugates[k], pk_t);
-        matrix_multiply(pk_t, b_operator, pk_t_r0);
+        matrix_multiply(pk_t, r0, pk_t_r0);
         int numerator = (*pk_t_r0)[0][0];
 
+        std::cout << "Debug" << std::endl;
         matrix_multiply(A_operator, A_conjugates[k], A_pk);
         matrix_multiply(pk_t, A_pk, pk_t_A_pk);
         ak = (*pk_t_A_pk)[0][0];
 
         matrix_multiply_scalar(A_conj_scalar, A_conjugates[k], ak);
         matrix_add(x0, A_conj_scalar, xcurrent);
-        delete x0;
         x0 = xcurrent;
     }
 
