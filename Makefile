@@ -6,13 +6,13 @@
 NVCC=nvcc
 BIN=bin
 OBJ=obj
-CFLAGS=-dc
+CFLAGS=-dc -g
 LDFLAGS=
 SOURCE_DIR=src
 INCLUDE_DIR=include
 
 # add any new files to this list here
-FILES=lu_decomposition.cu main.cu managed.cu matrix.cu matrix_operations.cu reductions.cu tests.cu 
+FILES=lu_decomposition.cu main.cu managed.cu matrix.cu matrix_operations.cu reductions.cu tests.cu cpu.cu
 SOURCES=$(FILES:%=$(SOURCE_DIR)/%)
 OBJECTS=$(FILES:%.cu=$(OBJ)/%.o)
 

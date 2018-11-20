@@ -1,5 +1,6 @@
 
 #include <fstream>
+#include <iostream>
 
 #include "matrix.h"
 #include "common.h"
@@ -13,6 +14,9 @@ Matrix::Matrix(const char *file) :
   flat(0)
 {
   this->Parse(file);
+//  std::cout << "TRACE: Matrix(const char *file)" << std::endl;
+//  matrix_print(this);
+//  std::cout << std::endl;
 }
 
 Matrix::Matrix(const Matrix &copy) :
@@ -28,6 +32,10 @@ Matrix::Matrix(const Matrix &copy) :
       this->flat[i * copy.num_cols + j] = copy.flat[i * copy.num_cols + j];
     }
   }
+  
+//  std::cout << "TRACE: Matrix(const Matrix &copy)" << std::endl;
+//  matrix_print(this);
+//  std::cout << std::endl;
 }
 
 Matrix::Matrix(int num_rows, int num_cols, bool identity) :
@@ -41,6 +49,10 @@ Matrix::Matrix(int num_rows, int num_cols, bool identity) :
   {
     ToIdentity();
   }
+  
+//  std::cout << "TRACE: Matrix(int num_rows, int num_cols, bool identity)" << std::endl;
+//  matrix_print(this);
+//  std::cout << std::endl;
 }
 
 Matrix::~Matrix(void)

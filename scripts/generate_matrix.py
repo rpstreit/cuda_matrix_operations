@@ -6,10 +6,10 @@ PARSER =  argparse.ArgumentParser()
 PARSER.add_argument("path", help="Output file path")
 PARSER.add_argument("rows", help="Number of rows", type=int)
 PARSER.add_argument("cols", help="Number of columns", type=int)
-PARSER.add_argument("-i", "--invertible", help="Make invertible matrix")
-PARSER.add_argument("-d", "--identity", help="Make identity matrix. Requires square matrix")
-PARSER.add_argument("-u", "--upper", help="Make upper triangular matrix")
-PARSER.add_argument("-l", "--lower", help="Make lower triangular matrix")
+PARSER.add_argument("-i", "--invertible", help="Make invertible matrix", action='store_true')
+PARSER.add_argument("-d", "--identity", help="Make identity matrix. Requires square matrix", action='store_true')
+PARSER.add_argument("-u", "--upper", help="Make upper triangular matrix", action='store_true')
+PARSER.add_argument("-l", "--lower", help="Make lower triangular matrix", action='store_true')
 
 ARGS = PARSER.parse_args()
 
@@ -41,11 +41,14 @@ def dump(f, matrix):
     for i in range(len(matrix)):
         f.write("\n")
         for j in range(len(matrix[0])):
-            f.write(matrix[i, j])
+            if j == 0:
+                f.write(str(matrix[i, j]))
+            else:
+                f.write(" " + str(matrix[i, j]))
 
 def main():
     f = open(ARGS.path, "w")
-    f.write(str(ARGS.rows) + "\n" + str(ARGS.cols) + "\n")
+    f.write(str(ARGS.rows) + "\n" + str(ARGS.cols))
    
     if (ARGS.invertible):
         assert ARGS.rows == ARGS.cols
