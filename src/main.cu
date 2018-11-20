@@ -25,7 +25,8 @@ struct operation_t
 enum Operations
 {
   MATMUL,
- 
+  LU_DECOMPOSITION, 
+
   // do not enter anything else after here
 
   COUNT
@@ -34,6 +35,7 @@ enum Operations
 operation_t ops[COUNT] =
 {
   {"matmul", 2, matmul_run, matmul_verify},
+  {"lu_decomposition", 1, lu_decomposition_run, lu_decomposition_verify}
 };
 
 int main(int argc, char **argv)
