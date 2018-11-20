@@ -63,6 +63,8 @@ void matrix_add(Matrix *A, Matrix *B, Matrix *C);
 
 void matrix_subtract(Matrix *A, Matrix *B, Matrix *C);
 
+void matrix_multiply_scalar(Matrix *output, Matrix *input, double scale);
+
 void matrix_getelementarymatrix(Matrix *A, Matrix *result, int col);
 
 void matrix_invertelementarymatrix(Matrix *A, Matrix *result, int col);
