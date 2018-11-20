@@ -7,6 +7,7 @@
 #include "cpu.h"
 #include "matrix.h"
 #include "lu_decomposition.h"
+#include "linearSysSolver.h"
 
 int matmul_run(int argc, Matrix **argv) 
 {
@@ -127,4 +128,47 @@ int lu_decomposition_verify(int argc, Matrix **argv)
   delete right;
 
   return result;
+}
+
+int linear_descent_run(int argc, Matrix **argv)
+{
+  if(argc != 2)
+  {
+    std::cerr << "error: lu decomposition requires 1 argument" << std::endl;
+  }
+  Matrix * A_operator = argv[0];
+  matrix_print(A_operator);
+  Matrix * b_operator = argv[1];
+  matrix_print(b_operator);
+
+  Matrix * output = steepestDescent(A_operator, b_operator);
+  matrix_print(output);
+
+  delete A_operator;
+  delete b_operator;
+  delete output;
+}
+
+int conjugate_direction_run(int argc, Matrix **argv)
+{
+  if(argc != 2)
+  {
+    std::cerr << "error: lu decomposition requires 1 argument" << std::endl;
+  }
+  Matrix * A_operator = argv[0];
+  matrix_print(A_operator);
+  Matrix * b_operator = argv[1];
+  matrix_print(b_operator);
+
+  Matrix * output = conjugateDirection(A_operator, b_operator);
+  matrix_print(output);
+
+  delete A_operator;
+  delete b_operator;
+  delete output;
+}
+
+int linear_solve_verify(int argc, Matrix **argv)
+{
+  return 0;
 }

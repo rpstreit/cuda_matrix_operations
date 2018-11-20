@@ -359,7 +359,7 @@ double dot_product(Matrix *vec1, Matrix *vec2)
 
   // Perform the multiplication
   Matrix *result = new Matrix(1, 1);
-  matrix_multiply(vec1, temp, result);
+  matrix_multiply(temp, vec1, result);
   std::cout << "Result:" << std::endl;
   matrix_print(result);
 
