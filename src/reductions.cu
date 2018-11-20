@@ -1,15 +1,24 @@
 
+#include <iostream>
 #include "common.h"
 
 __global__ void kreduce_add(double *g_in, double *g_out, int length);
 __global__ void kreduce_product(double *g_in, double *g_out, int length);
 __global__ void kreduce_min(double *g_in, double *g_out, int length);
-__global__ void kreduce_max(double *g_in, double *g_out, int length, int *idx_in, int *idx_out);
+__global__ void kreduce_max(double *g_in, double *g_out, int length, int *idx_in, int *idx_out, bool abs);
 
 __global__ void kget_counting_array(int *result, int length);
 
-double reduce_maxidx(double *data, int length, int *idx)
+double reduce_absmaxidx(double *data, int length, int *idx)
 {
+//  double hdata[length];
+//  cudaMemcpy(hdata, data, length * sizeof(double), cudaMemcpyDeviceToHost);
+//  std::cout << "TRACE: reduce_maxidx -> data: ";
+//    for (int j = 0; j < length; ++j)
+//    {
+//      std::cout << " " << hdata[j];
+//    }
+//    std::cout << " }" << std::endl;
 	double *d_out;
   int *d_idx1, *d_idx2;
 	int num_blocks = (length + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
@@ -23,7 +32,7 @@ double reduce_maxidx(double *data, int length, int *idx)
 	// communication between blocks	
 	for (;;)
 	{
-    kreduce_max<<<num_blocks, THREADS_PER_BLOCK>>>(data, d_out, length, d_idx1, d_idx2);
+    kreduce_max<<<num_blocks, THREADS_PER_BLOCK>>>(data, d_out, length, d_idx1, d_idx2, true);
 		cudaDeviceSynchronize();
 		if (num_blocks == 1)
 		{
@@ -79,7 +88,7 @@ double reduce(double *data, int length, Reduction op_type)
         break;
 
       case MAX:
-        kreduce_max<<<num_blocks, THREADS_PER_BLOCK>>>(data, d_out, length, 0, 0);
+        kreduce_max<<<num_blocks, THREADS_PER_BLOCK>>>(data, d_out, length, 0, 0, false);
         break;
 
       case ADD:
@@ -127,7 +136,7 @@ __global__ void kget_counting_array(int *result, int length)
 
 __global__ void kreduce_add(double *g_in, double *g_out, int length)
 {
-	__shared__ int s_data[THREADS_PER_BLOCK]; // for speed
+	__shared__ double s_data[THREADS_PER_BLOCK]; // for speed
 
  	int idx = threadIdx.x + blockIdx.x * blockDim.x;
 	int tid = threadIdx.x;
@@ -164,7 +173,7 @@ __global__ void kreduce_add(double *g_in, double *g_out, int length)
 
 __global__ void kreduce_product(double *g_in, double *g_out, int length)
 {
-	__shared__ int s_data[THREADS_PER_BLOCK]; // for speed
+	__shared__ double s_data[THREADS_PER_BLOCK]; // for speed
 
  	int idx = threadIdx.x + blockIdx.x * blockDim.x;
 	int tid = threadIdx.x;
@@ -199,9 +208,9 @@ __global__ void kreduce_product(double *g_in, double *g_out, int length)
 	}
 }
 
-__global__ void kreduce_max(double *g_in, double *g_out, int length, int *idx_in, int *idx_out)
+__global__ void kreduce_max(double *g_in, double *g_out, int length, int *idx_in, int *idx_out, bool abs)
 {
-	__shared__ int s_data[THREADS_PER_BLOCK * 2]; // for speed
+	__shared__ double s_data[THREADS_PER_BLOCK * 2]; // for speed
 
  	int idx = threadIdx.x + blockIdx.x * blockDim.x;
 	int tid = threadIdx.x;
@@ -224,7 +233,18 @@ __global__ void kreduce_max(double *g_in, double *g_out, int length, int *idx_in
 		{
 			if (tid < i && (idx + i) < length)
 			{
-        if (s_data[tid] < s_data[tid + i])
+        double me, them;
+        if (abs)
+        {
+          me = s_data[tid] < 0 ? -1.f * s_data[tid] : s_data[tid];
+          them = s_data[tid + i] < 0 ? -1.f * s_data[tid + i] : s_data[tid + i];
+        }
+        else
+        {
+          me = s_data[tid];
+          them = s_data[tid + i];
+        }
+        if (me < them)
         {
           s_data[tid] = s_data[tid + i];
           s_data[THREADS_PER_BLOCK + tid] = s_data[THREADS_PER_BLOCK + tid + i];
@@ -243,7 +263,7 @@ __global__ void kreduce_max(double *g_in, double *g_out, int length, int *idx_in
 }
 __global__ void kreduce_min(double *g_in, double *g_out, int length)
 {
-	__shared__ int s_data[THREADS_PER_BLOCK]; // for speed
+	__shared__ double s_data[THREADS_PER_BLOCK]; // for speed
 
  	int idx = threadIdx.x + blockIdx.x * blockDim.x;
 	int tid = threadIdx.x;

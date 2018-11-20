@@ -23,4 +23,16 @@ int matmul_run(int argc, Matrix **argv);
 
 int matmul_verify(int argc, Matrix **argv);
 
+int lu_decomposition_run(int argc, Matrix **argv);
+
+int lu_decomposition_verify(int argc, Matrix **argv);
+
+
+int linear_descent_run(int argc, Matrix **argv);
+
+int conjugate_direction_run(int argc, Matrix **argv);
+
+int linear_solve_verify(int argc, Matrix **argv);
+
+
 #endif

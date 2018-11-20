@@ -5,6 +5,7 @@
 #include "common.h"
 #include "matrix.h"
 #include "lu_decomposition.h"
+#include "linearSysSolver.h"
 #include "tests.h"
 
 #define VERIFY_KEY "verify"
@@ -25,7 +26,9 @@ struct operation_t
 enum Operations
 {
   MATMUL,
- 
+  LU_DECOMPOSITION, 
+  LINEAR_DESCENT,
+  CONJUGATE_DIRECTION,
   // do not enter anything else after here
 
   COUNT
@@ -34,6 +37,9 @@ enum Operations
 operation_t ops[COUNT] =
 {
   {"matmul", 2, matmul_run, matmul_verify},
+  {"lu_decomposition", 1, lu_decomposition_run, lu_decomposition_verify},
+  {"linear_descent", 2, linear_descent_run, linear_solve_verify},
+  {"conjugate_direction", 2, conjugate_direction_run, linear_solve_verify}
 };
 
 int main(int argc, char **argv)

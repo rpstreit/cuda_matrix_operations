@@ -25,7 +25,7 @@ enum BlockLoc
 // Outputs: double result of reduction
 double reduce(double *data, int length, Reduction op_type);
 
-double reduce_maxidx(double *data, int length, int *idx);
+double reduce_absmaxidx(double *data, int length, int *idx);
 
 // matrix_transpose
 //
@@ -57,6 +57,12 @@ void matrix_copy(Matrix *dest, Matrix *src);
 
 void matrix_rowswap(Matrix *A, int row1, int row2);
 
+void matrix_subdiagonal_rowswap(Matrix *A, int row1, int row2);
+
+void matrix_add(Matrix *A, Matrix *B, Matrix *C);
+
+void matrix_subtract(Matrix *A, Matrix *B, Matrix *C);
+
 void matrix_getelementarymatrix(Matrix *A, Matrix *result, int col);
 
 void matrix_invertelementarymatrix(Matrix *A, Matrix *result, int col);
@@ -70,4 +76,7 @@ void matrix_print(Matrix *A);
 
 double norm(Matrix *vec);
 
+void GJE_inverse(Matrix* matrix);
+
+void matrix_subdiagonal_writecolumn(Matrix *dest, Matrix *src, int col);
 #endif
