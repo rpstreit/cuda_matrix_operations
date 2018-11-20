@@ -25,14 +25,14 @@ Matrix * steepestDescent(Matrix *A_operator, Matrix *b_operator) {
     Matrix *x_current = x0;
     Matrix *x_next = new Matrix(size, 1);
     Matrix *d_vector = new Matrix(size, 1);
-    Matrix *d_vector_transpose = new Matrix(1, size);
+    // Matrix *d_vector_transpose = new Matrix(1, size);
 
 
     // Allocate all intermediate matrices required
     Matrix * A_xk_1 = new Matrix(size, 1);
     Matrix * A_dk_1 = new Matrix(size, 1);
-    Matrix * A_xk_1_b = new Matrix(size, 1);
-    Matrix * dk_1_A_dk_1 = new Matrix(1, 1);
+    // Matrix * A_xk_1_b = new Matrix(size, 1);
+    // Matrix * dk_1_A_dk_1 = new Matrix(1, 1);
     Matrix * Axk1_boperator = new Matrix(size, 1);
     Matrix * d_vector_scalar = new Matrix(size, 1);
 
@@ -88,8 +88,8 @@ Matrix * steepestDescent(Matrix *A_operator, Matrix *b_operator) {
         matrix_subtract(A_xk_1, b_operator, Axk1_boperator);
         // matrix_print(Axk1_boperator);
         matrix_multiply_scalar(d_vector, Axk1_boperator, -1);
-        std::cout << "\nD_vector is currently:" << std::endl;
-        matrix_print(d_vector);
+        // std::cout << "\nD_vector is currently:" << std::endl;
+        // matrix_print(d_vector);
         
         // numerator of multiplier
         double normal = norm(d_vector);
@@ -101,14 +101,14 @@ Matrix * steepestDescent(Matrix *A_operator, Matrix *b_operator) {
         matrix_multiply(A_operator, d_vector, A_dk_1);
         // denominator of multiplier
         double denominator = dot_product(d_vector, A_dk_1);    
-        std::cout << "\nA_dk_1" << std::endl;
-        matrix_print(A_dk_1);
+        // std::cout << "\nA_dk_1" << std::endl;
+        // matrix_print(A_dk_1);
 
 
         double scalar = ((double)dk_1sq / (double)denominator) / (50.0 * size);
-        std::cout << "\nScalar is " << scalar << std::endl;
-        std::cout << "Numerator is " << dk_1sq << std::endl;
-        std::cout << "Denominator is " << denominator << std::endl;
+        // std::cout << "\nScalar is " << scalar << std::endl;
+        // std::cout << "Numerator is " << dk_1sq << std::endl;
+        // std::cout << "Denominator is " << denominator << std::endl;
         matrix_multiply_scalar(d_vector_scalar, d_vector, scalar);
 
         matrix_add(x_current, d_vector_scalar, x_next);
@@ -128,11 +128,13 @@ Matrix * steepestDescent(Matrix *A_operator, Matrix *b_operator) {
         }
     } while(norm(d_vector) > error);
 
+    delete x0;
     delete A_xk_1;
     delete A_dk_1;
-    delete dk_1_A_dk_1;
+    // delete dk_1_A_dk_1;
     delete d_vector;
     delete Axk1_boperator;
+    
     return x_current;
 }
 

@@ -10,6 +10,7 @@ PARSER.add_argument("-i", "--invertible", help="Make invertible matrix", action=
 PARSER.add_argument("-d", "--identity", help="Make identity matrix. Requires square matrix", action='store_true')
 PARSER.add_argument("-u", "--upper", help="Make upper triangular matrix", action='store_true')
 PARSER.add_argument("-l", "--lower", help="Make lower triangular matrix", action='store_true')
+PARSER.add_argument("-spd", "--spdmat", help="Make Symmetric Positve Definite matrix", action='store_true')
 
 ARGS = PARSER.parse_args()
 
@@ -37,6 +38,16 @@ def get_lower(n):
 
     return matrix
 
+def SPD(n):
+    A = np.random.rand(n, n)
+    A = .5 * np.matmul(A, np.transpose(A))
+    A = A + n * np.eye(n, n)
+    for i in range(n):
+        for j in range(n):
+            if(A[i][j] < .0001):
+                A[i][j] = 0
+    return A
+
 def dump(f, matrix):
     for i in range(len(matrix)):
         f.write("\n")
@@ -45,6 +56,8 @@ def dump(f, matrix):
                 f.write(str(matrix[i, j]))
             else:
                 f.write(" " + str(matrix[i, j]))
+
+
 
 def main():
     f = open(ARGS.path, "w")
@@ -64,6 +77,9 @@ def main():
     elif (ARGS.lower):
         assert ARGS.rows == ARGS.cols
         matrix = get_lower(ARGS.rows)
+    elif (ARGS.spdmat):
+        assert ARGS.rows == ARGS.cols
+        matrix = SPD(ARGS.rows)
     else:
         matrix = np.random.rand(ARGS.rows, ARGS.cols)
 

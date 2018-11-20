@@ -1,6 +1,7 @@
 
 #include <cstdarg>
 #include <iostream>
+#include <cmath>
 
 #include "tests.h"
 #include "common.h"
@@ -148,8 +149,6 @@ int linear_descent_run(int argc, Matrix **argv)
   Matrix * output = steepestDescent(A_operator, b_operator);
   matrix_print(output);
 
-  delete A_operator;
-  delete b_operator;
   delete output;
 
   return 0;
@@ -170,8 +169,6 @@ int conjugate_direction_run(int argc, Matrix **argv)
   Matrix * output = conjugateDirection(A_operator, b_operator);
   matrix_print(output);
 
-  delete A_operator;
-  delete b_operator;
   delete output;
 
   return 0;
@@ -195,7 +192,40 @@ int determinant_recur_run(int argc, Matrix **argv)
 
 int linear_solve_verify(int argc, Matrix **argv)
 {
-  return 0;
+  if(argc != 2)
+  {
+    std::cerr << "error: lu decomposition requires 1 argument" << std::endl;
+  }
+  
+  Matrix * A_operator = argv[0];
+  matrix_print(A_operator);
+  Matrix * b_operator = argv[1];
+  matrix_print(b_operator);
+
+  Matrix * output1 = steepestDescent(A_operator, b_operator);
+  Matrix * x_star = new Matrix(b_operator->GetNumRows(), b_operator->GetNumCols()); 
+  matrix_multiply_cpu(A_operator, output1, x_star);
+  bool ok = true;
+  for(int i=0; i<x_star->GetNumRows; i++) {
+    if(abs(x_star->GetFlattened()[i] - b_operator->GetFlattened()[i]) > .1)
+      ok = false;
+  }
+
+  Matrix * output2 = conjugateDirection(A_operator, b_operator);
+  return ok ? 0 : 1;
+  // Matrix * combined_eliminator = new Matrix(A_operator->GetNumRows(), A_operator->GetNumCols() + 1);
+  // for(int i=0; i<A_operator->GetNumRows(); i++) {
+  //   for(int j=0; j<A_operator->GetNumCols(); j++) {
+  //     combined_eliminator->GetFlattened()[i * (A_operator->GetNumCols()+1) + j] = A_operator->GetFlattened()[i * A_operator->GetNumCols() + j]
+  //   }
+  // }
+
+  // for(int i=0; i<A_operator->GetNumRows(); i++) {
+  //   combined_eliminator->GetFlattened()[i*(A_operator->GetNumCols() + 1)] = b_operator->GetFlattened()[i];
+  // }
+
+  // matrix_print(combined_eliminator);
+
 }
 
 int determinant_verify(int argc, Matrix **argv)
