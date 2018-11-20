@@ -12,16 +12,18 @@ void combineInverse(Matrix* matrix, Matrix* inverse, Matrix* dest){
     int cols = dest->GetNumCols();
     int rows = dest->GetNumRows();
 
-    int num_blocks = (rows * cols + 512 -1)/512;
+    //int num_blocks = (rows * cols + 512 -1)/512;
 
-    kcombine<<<num_blocks, 512>>>(matrix, inverse, dest);
+    kcombine<<<rows, cols>>>(matrix, inverse, dest);
+    //kcombine<<<num_blocks, 512>>>(matrix, inverse, dest);
     cudaDeviceSynchronize();
 }
 
 //Assume the matrix is an n*n matrix
 void GJE_inverse(Matrix* matrix){
     int size; int j; int k;
-    double *d_row;
+    double *d_row; 
+    //double *h_row;
     
     int row = matrix->GetNumRows();
     int col = matrix->GetNumCols();
@@ -30,24 +32,26 @@ void GJE_inverse(Matrix* matrix){
     matrix_copy(inverse, matrix);
     inverse->ToIdentity();
 
-    Matrix *combination = new Matrix(row * 2, col * 2);
+    Matrix *combination = new Matrix(row, col * 2);
     combineInverse(matrix, inverse, combination);
+    matrix_print(combination);
 
     j = 0;
     size = matrix->GetNumCols();
 
+    //h_row = (double*)malloc(sizeof(double) * size);
     cudaMalloc((void**)&d_row, sizeof(double) * (size));
 
     double* flat_matrix = combination->GetFlattened();
 
     while(j < size){
-        //cudaMemcpy(d_j, j, sizeof(int), cudaMemcpyHostToDevice);
+        //cudaMemcpy(d_row, h_row, sizeof(double) * size, cudaMemcpyHostToDevice);
         //cudaMemcpy(d_size, size, sizeof(int), cudaMemcpyHostToDevice);
         //find k where matrix[k][j] is not 0
         //find_nonzero(flat_matrix, d_size, d_j, d_row);
         find_nonzero<<<1, size>>>(flat_matrix, size, j, d_row);
 
-        k = (int)(reduce(d_row, size, MIN));
+        /*k = (int)(reduce(d_row, size, MIN));
         //cudaMemcpy(d_k, k, sizeof(int), cudaMemcpyHostToDevice);
         
         //spawn n threads in 1 block 
@@ -57,27 +61,27 @@ void GJE_inverse(Matrix* matrix){
         fixRow<<<1, size>>>(flat_matrix, size, j);
 
         //spawn n threads in each n blocks
-        fixCol<<<size, size>>>(flat_matrix, size, j);
+        fixCol<<<size, size>>>(flat_matrix, size, j);*/
         j++;
     }
 
-    matrix_print(matrix);
+    //matrix_print(combination);
     delete inverse;
     delete combination;
 }
 
 __global__ void kcombine(Matrix* matrix, Matrix* inverse, Matrix* dest){
     int idx = threadIdx.x+blockIdx.x*blockDim.x;
-    int half_row = dest->GetNumRows()/2;
-    int half_col = dest->GetNumCols()/2;
+    int idx_orig = ((threadIdx.x) + blockIdx.x*((blockDim.x/2)));
     bool end = idx < dest->GetNumRows() * dest->GetNumCols() ? false : true;
     
     if(!end){
         if(threadIdx.x < (blockDim.x / 2)) {
-            dest->GetFlattened()[idx] = matrix->GetFlattened()[idx];
+            dest->GetFlattened()[idx] = matrix->GetFlattened()[idx_orig];
         }
         else {
-            dest->GetFlattened()[idx] = inverse->GetFlattened()[idx];
+            dest->GetFlattened()[idx] = inverse->GetFlattened()[idx_orig+1];
+	    //dest->GetFlattened()[idx] = 100;
         }
     }
 }
