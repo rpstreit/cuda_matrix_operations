@@ -25,9 +25,9 @@ class Matrix : public Managed
     void ToIdentity(void);
     void ToZeroes(void);
 
-    Matrix * operator-(Matrix *other);
-    Matrix * operator+(Matrix *other);
-    Matrix * operator*(double scale);
+//    Matrix * operator-(Matrix *other);
+//    Matrix * operator+(Matrix *other);
+//    Matrix * operator*(double scale);
     __host__ __device__ double * operator[](int row_idx);
     __host__ __device__ double & At(int row, int col);
     __host__ __device__ double * GetFlattened(void);
