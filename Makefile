@@ -12,7 +12,7 @@ SOURCE_DIR=src
 INCLUDE_DIR=include
 
 # add any new files to this list here
-FILES=lu_decomposition.cu linearSysSolver.cu main.cu managed.cu matrix.cu matrix_operations.cu reductions.cu tests.cu cpu.cu matrix_inverse.cu
+FILES=determinant.cu lu_decomposition.cu linearSysSolver.cu main.cu managed.cu matrix.cu matrix_operations.cu reductions.cu tests.cu cpu.cu matrix_inverse.cu
 SOURCES=$(FILES:%=$(SOURCE_DIR)/%)
 OBJECTS=$(FILES:%.cu=$(OBJ)/%.o)
 

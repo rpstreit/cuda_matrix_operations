@@ -157,6 +157,7 @@ int conjugate_direction_run(int argc, Matrix **argv)
   {
     std::cerr << "error: lu decomposition requires 1 argument" << std::endl;
   }
+  
   Matrix * A_operator = argv[0];
   matrix_print(A_operator);
   Matrix * b_operator = argv[1];
@@ -170,7 +171,27 @@ int conjugate_direction_run(int argc, Matrix **argv)
   delete output;
 }
 
+int determinant_recur_run(int argc, Matrix **argv)
+{
+  if(argc != 1)
+  {
+    std::cerr << "error: lu decomposition requires 1 argument" << std::endl;
+  }
+  Matrix * A_operator = argv[0];
+  matrix_print(A_operator);
+
+  int determinant = determinant_recur(A_operator);
+  std::cout << determinant << std::endl;
+
+  delete A_operator;
+}
+
 int linear_solve_verify(int argc, Matrix **argv)
+{
+  return 0;
+}
+
+int determinant_verify(int argc, Matrix **argv)
 {
   return 0;
 }

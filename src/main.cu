@@ -5,6 +5,7 @@
 #include "common.h"
 #include "matrix.h"
 #include "lu_decomposition.h"
+#include "determinant.h"
 #include "linearSysSolver.h"
 #include "tests.h"
 
@@ -29,6 +30,7 @@ enum Operations
   LU_DECOMPOSITION, 
   LINEAR_DESCENT,
   CONJUGATE_DIRECTION,
+  DETERMINANT_RECUR,
   // do not enter anything else after here
 
   COUNT
@@ -39,7 +41,8 @@ operation_t ops[COUNT] =
   {"matmul", 2, matmul_run, matmul_verify},
   {"lu_decomposition", 1, lu_decomposition_run, lu_decomposition_verify},
   {"linear_descent", 2, linear_descent_run, linear_solve_verify},
-  {"conjugate_direction", 2, conjugate_direction_run, linear_solve_verify}
+  {"conjugate_direction", 2, conjugate_direction_run, linear_solve_verify},
+  {"determinant_recur", 1, determinant_recur_run, determinant_verify}
 };
 
 int main(int argc, char **argv)
