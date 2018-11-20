@@ -33,6 +33,11 @@ int conjugate_direction_run(int argc, Matrix **argv);
 
 int linear_solve_verify(int argc, Matrix **argv);
 
-int determinant_iter(int argc, Matrix **argv);
+int determinant_recur_run(int argc, Matrix **argv);
+int determinant_verify(int argc, Matrix **argv);
+// int determinant_iter(int argc, Matrix **argv);
+int GJE_inverse_run(int argc, Matrix **argv);
+
+int inverse_verify(int argc, Matrix **argv);
 
 #endif

@@ -78,7 +78,5 @@ void matrix_print(Matrix *A);
 
 double norm(Matrix *vec);
 
-void GJE_inverse(Matrix* matrix);
-
 void matrix_subdiagonal_writecolumn(Matrix *dest, Matrix *src, int col);
 #endif

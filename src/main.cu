@@ -8,6 +8,7 @@
 #include "determinant.h"
 #include "linearSysSolver.h"
 #include "tests.h"
+#include "matrix_inverse.h"
 
 #define VERIFY_KEY "verify"
 
@@ -31,6 +32,7 @@ enum Operations
   LINEAR_DESCENT,
   CONJUGATE_DIRECTION,
   DETERMINANT_RECUR,
+  GJE_INVERSE,
   // do not enter anything else after here
 
   COUNT
@@ -42,7 +44,8 @@ operation_t ops[COUNT] =
   {"lu_decomposition", 1, lu_decomposition_run, lu_decomposition_verify},
   {"linear_descent", 2, linear_descent_run, linear_solve_verify},
   {"conjugate_direction", 2, conjugate_direction_run, linear_solve_verify},
-  {"determinant_recur", 1, determinant_recur_run, determinant_verify}
+  {"determinant_recur", 1, determinant_recur_run, determinant_verify},
+  {"GJE_inverse", 1, GJE_inverse_run, inverse_verify}
 };
 
 int main(int argc, char **argv)
