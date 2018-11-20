@@ -97,3 +97,40 @@ std::vector<Matrix *> constructAConjugates(Matrix * A_operator) {
 
     return p_vectors;
 }
+
+
+Matrix * conjugateDirection(Matrix * A_operator, Matrix * b_operator) {
+    Matrix *x0 = new Matrix(A_operator->GetNumRows(), 0); // make a column vector
+    Matrix *xcurrent; // make a column vector
+    std::vector<Matrix *> A_conjugates = constructAConjugates(A_operator);
+    double ak;
+    // we will have our guess of x0 be 0 so that r0 = b
+    
+    Matrix * pk_t = new Matrix(1, A_conjugates[0]->GetNumRows());
+    Matrix * pk_t_r0 = new Matrix(1, 1);
+    Matrix * A_pk = new Matrix(A_operator->GetNumCols(), b_operator->GetNumRows());
+    Matrix * pk_t_A_pk = new Matrix(1, 1);
+    // Limited run
+    for(int k=0; k < A_operator->GetNumRows(); k++) {
+        matrix_transpose(A_conjugates[k], pk_t);
+        matrix_multiply(pk_t, b_operator, pk_t_r0);
+        int numerator = (*pk_t_r0)[0][0];
+
+        matrix_multiply(A_operator, A_conjugates[k], A_pk);
+        matrix_multiply(pk_t, A_pk, pk_t_A_pk);
+        ak = (*pk_t_A_pk)[0][0];
+        xcurrent = &(*x0 + (*(A_conjugates[k]) * ak));
+        delete x0;
+        x0 = xcurrent;
+    }
+
+    delete pk_t;
+    delete pk_t_r0;
+    delete A_pk;
+    delete pk_t_A_pk;
+
+    for(int i=0; i<A_conjugates.size(); i++) {
+        delete A_conjugates[i];
+    }
+    return x0;
+}
