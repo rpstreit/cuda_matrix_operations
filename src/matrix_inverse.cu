@@ -57,8 +57,9 @@ void GJE_inverse(Matrix* matrix){
         //find_nonzero(flat_matrix, d_size, d_j, d_row);
         //cudaMemcpy(d_flat, flat_matrix, sizeof(double) * row * col, cudaMemcpyHostToDevice);
         //find_nonzero<<<1, size>>>(flat_matrix, size, j, d_row);
-        find_nonzero<<<1, size>>>(flat_matrix, matrix->GetNumCols(), j, d_row);
-        k = (int)(reduce(d_row, size, MIN));
+        //find_nonzero<<<1, size>>>(flat_matrix, matrix->GetNumCols(), j, d_row);
+        //k = (int)(reduce(d_row, size, MIN));
+        //k = j;
 
         // cudaMemcpy(h_flat, flat_matrix, sizeof(double) * size * size, cudaMemcpyDeviceToHost);
         // k = find_nonzero(h_flat, j, size);
@@ -67,7 +68,7 @@ void GJE_inverse(Matrix* matrix){
         //spawn n threads in 1 block 
         std::cout << "\nBefore pivot j = " << j<< "k = " << k << std::endl;
         matrix_print(combination);
-        pivot<<<1, size*2>>>(j,k, flat_matrix, matrix->GetNumCols());
+        pivot<<<1, size*2>>>(j,j, flat_matrix, matrix->GetNumCols());
         cudaDeviceSynchronize();
         std::cout << "After pivot" << std::endl;
         matrix_print(combination);
@@ -81,7 +82,7 @@ void GJE_inverse(Matrix* matrix){
         matrix_print(combination);
 
         //spawn n threads in each n blocks
-        fixCol<<<size*2, size*2>>>(flat_matrix, matrix->GetNumCols(), k);
+        fixCol<<<size*2, size*2>>>(flat_matrix, matrix->GetNumCols(), j);
         cudaDeviceSynchronize();
         std::cout << "After fix col" << std::endl;
         matrix_print(combination);
