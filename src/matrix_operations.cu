@@ -253,14 +253,19 @@ __global__ void kmatrix_getelementarymatrix(Matrix *A, Matrix *result, int col)
  */
 double dot_product(Matrix *vec1, Matrix *vec2) 
 {
+  std::cout << "Performing dot product" << std::endl;
   // First Transpose vector 2 for matrix multiplication
   int length = vec1->GetNumRows();
   Matrix *temp = new Matrix(1, length);
   matrix_transpose(vec2, temp);
-  
+  std::cout << "Temp:" << std::endl;
+  matrix_print(temp);
+
   // Perform the multiplication
   Matrix *result = new Matrix(1, 1);
   matrix_multiply(vec1, temp, result);
+  std::cout << "Result:" << std::endl;
+  matrix_print(result);
 
   // Resulting 1x1 matrix holds the dot product
   double prod = *(result->GetFlattened());
