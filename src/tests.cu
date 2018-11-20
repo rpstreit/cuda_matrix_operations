@@ -219,5 +219,26 @@ int GJE_inverse_run(int argc, Matrix **argv)
 
 int inverse_verify(int argc, Matrix **argv)
 {
-  return 0;
+  if(argc != 1)
+  {
+    std::cerr << "error: GJE_inverse_run requires 1 argument" << std::endl;
+  }
+  Matrix * A_operator = argv[0];
+  matrix_print(A_operator);
+
+  Matrix * output = GJE_inverse(A_operator);
+  matrix_print(output);
+
+  Matrix* check = new Matrix(A_operator->GetNumRows(), A_operator->GetNumCols());
+
+  matrix_multiply(A_operator, output, check);
+  A_operator->ToIdentity();
+
+  if (matrix_equals(check, A_operator, 0.01)){
+    delete check;
+    return 0;
+  }
+
+  delete check;
+  return 1;
 }
