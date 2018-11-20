@@ -143,9 +143,8 @@ Matrix& Matrix::operator*(double scale)
   Matrix *blah = new Matrix(this->num_rows, this->num_cols);
   int num_blocks = (this->num_cols * this->num_rows + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
   kmultiply<<<num_blocks, THREADS_PER_BLOCK>>>(blah, this, scale);
-  return blah;
+  return *blah;
 }
-
 
 
 void Matrix::Parse(const char* file)

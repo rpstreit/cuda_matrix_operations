@@ -62,4 +62,6 @@ void matrix_invertelementarymatrix(Matrix *A, Matrix *result, int col);
 
 bool matrix_equals(Matrix *A, Matrix *B, double error);
 
+double dot_product(Matrix *vec1, Matrix *vec2);
+
 #endif
