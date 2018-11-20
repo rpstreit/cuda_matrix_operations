@@ -45,7 +45,7 @@ int determinant_recur(Matrix *A)
 			}
 
 			// calculate determinant from (N - 1)-size minor matrix
-			result += pow(-1, 1 + j1 + 1) * (*A)[0][j1] * determinant(minor_intermediate);
+			// result += pow(-1, 1 + j1 + 1) * (*A)[0][j1] * determinant(minor_intermediate);
 
 			// free all minor matrices here after recursive call is returning from base case
 			delete minor_intermediate;
