@@ -51,7 +51,7 @@ int determinant_recur(Matrix *A)
 			result += pow(-1, 1 + j1) * (*A)[0][j1] * determinant_recur(minor_intermediate);
 
 			// free all minor matrices here after recursive call is returning from base case
-			delete minor_intermediate;
+			//delete minor_intermediate;
 		}
 
 		// // need to wait for all minor matrices

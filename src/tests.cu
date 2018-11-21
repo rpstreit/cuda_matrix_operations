@@ -246,7 +246,25 @@ int linear_solve_verify(int argc, Matrix **argv)
 
 int determinant_verify(int argc, Matrix **argv)
 {
-  return 0;
+  if(argc != 1)
+  {
+    std::cerr << "error: determinant_verify_run requires 1 argument" << std::endl;
+  }
+
+  Matrix * A_operator = argv[0];
+  matrix_print(A_operator);
+
+  int recur_ans = determinant_recur(A_operator);
+  int lu_ans = determinant_recur(A_operator);  
+
+
+  std::cout << "recursive: " << recur_ans << " lu: " << lu_ans << std::endl; 
+  if (recur_ans == lu_ans)
+  {
+    return 0;
+  }
+
+  return 1;
 }
 
 int GJE_inverse_run(int argc, Matrix **argv)

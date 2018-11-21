@@ -4,8 +4,6 @@ class TreeNode : public Managed
 {
   private:
     TreeNode *parent;
-    int num_cols;
-    int num_rows;
 
   public:
     Tree(void);
