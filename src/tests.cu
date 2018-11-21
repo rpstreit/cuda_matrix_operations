@@ -184,7 +184,23 @@ int determinant_recur_run(int argc, Matrix **argv)
   matrix_print(A_operator);
 
   int determinant = determinant_recur(A_operator);
-  std::cout << determinant << std::endl;
+  std::cout << "determinant: " << determinant << std::endl;
+
+  delete A_operator;
+  return 0;
+}
+
+int determinant_lu_run(int argc, Matrix **argv)
+{
+  if(argc != 1)
+  {
+    std::cerr << "error: lu decomposition requires 1 argument" << std::endl;
+  }
+  Matrix * A_operator = argv[0];
+  matrix_print(A_operator);
+
+  int determinant = determinant_lu(A_operator);
+  std::cout << "determinant: " << determinant << std::endl;
 
   delete A_operator;
   return 0;
