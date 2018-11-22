@@ -1,6 +1,9 @@
 
 #include <math.h>
+#include <iostream>
 #include "common.h"
+#include "matrix_inverse.h"
+#include "lu_decomposition.h"
 
 #include <stack>
 //#include <tuple>
@@ -45,10 +48,10 @@ int determinant_recur(Matrix *A)
 			}
 
 			// calculate determinant from (N - 1)-size minor matrix
-			// result += pow(-1, 1 + j1 + 1) * (*A)[0][j1] * determinant(minor_intermediate);
+			result += pow(-1, 1 + j1) * (*A)[0][j1] * determinant_recur(minor_intermediate);
 
 			// free all minor matrices here after recursive call is returning from base case
-			delete minor_intermediate;
+			//delete minor_intermediate;
 		}
 
 		// // need to wait for all minor matrices
@@ -56,6 +59,29 @@ int determinant_recur(Matrix *A)
 	}
 
 	return result;
+}
+
+int determinant_lu(Matrix *A)
+{
+	Matrix *P = new Matrix(A->GetNumCols(), A->GetNumCols());
+	Matrix *L = new Matrix(A->GetNumCols(), A->GetNumCols());
+	Matrix *U = new Matrix(A->GetNumRows(), A->GetNumCols());
+
+	lu_decomposition(A, L, U, P);
+
+	//Matrix *P_inv = GJE_inverse(P);
+
+	int P_inv_det = determinant_recur(P);
+  int L_det = determinant_recur(L);
+	int U_det = determinant_recur(U);
+
+  printf("P_inv_det %d, L_det %d, U_det %d\n", P_inv_det, L_det, U_det);
+
+	delete P;
+	delete L;
+	delete U;
+
+	return P_inv_det * L_det * U_det;		
 }
 
 // int determinant_iter(Matrix *A)

@@ -32,6 +32,7 @@ enum Operations
   LINEAR_DESCENT,
   CONJUGATE_DIRECTION,
   DETERMINANT_RECUR,
+  DETERMINANT_LU,
   GJE_INVERSE,
   // do not enter anything else after here
 
@@ -45,6 +46,7 @@ operation_t ops[COUNT] =
   {"linear_descent", 2, linear_descent_run, linear_solve_verify},
   {"conjugate_direction", 2, conjugate_direction_run, linear_solve_verify},
   {"determinant_recur", 1, determinant_recur_run, determinant_verify},
+  {"determinant_lu", 1, determinant_lu_run, determinant_verify},
   {"GJE_inverse", 1, GJE_inverse_run, inverse_verify}
 };
 
