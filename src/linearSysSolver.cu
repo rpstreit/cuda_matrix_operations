@@ -219,7 +219,6 @@ std::vector<Matrix *> constructAConjugates(Matrix * A_operator) {
  */
 Matrix * conjugateDirection(Matrix * A_operator, Matrix * b_operator) {
     Matrix *xk = new Matrix(A_operator->GetNumRows(), 1); // make a column vector
-    xk->GetFlattened()[0] = 1;
     Matrix *xcurrent = new Matrix(A_operator->GetNumRows(), 1); // make a column vector
     int size = A_operator->GetNumRows();
     std::vector<Matrix *> A_conjugates = constructAConjugates(A_operator);
