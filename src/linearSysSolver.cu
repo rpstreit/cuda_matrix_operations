@@ -161,8 +161,8 @@ std::vector<Matrix *> constructAConjugates(Matrix * A_operator) {
     Matrix *pk_pj = new Matrix(length, 1);
     Matrix *pk_pj_scalar = new Matrix(length, 1);
 
-    for(int k=0; k<length; k++) {
-        for(int j=0; j<k; j++) {
+    for(int k=0; k<length-1; k++) {
+        for(int j=0; j<=k; j++) {
             // get Pj transpose
             matrix_transpose(p_vectors[j], pj_t);
             std::cout << "P_vectors[j] transpose:" << std::endl;
@@ -174,7 +174,7 @@ std::vector<Matrix *> constructAConjugates(Matrix * A_operator) {
             matrix_print(pj_t_A);
 
             // Get (Pj transpose * A) * Pk
-            matrix_multiply(pj_t_A, p_vectors[k], pj_t_A_pk);
+            matrix_multiply(pj_t_A, p_vectors[k+1], pj_t_A_pk);
             std::cout << "P_vectors_j * A_operator * P_vectors_k:" << std::endl;
             matrix_print(pj_t_A_pk);
 
@@ -195,7 +195,7 @@ std::vector<Matrix *> constructAConjugates(Matrix * A_operator) {
             double multiplier = numerator / denominator;
 
             matrix_multiply_scalar(pk_pj_scalar, pk_pj, multiplier);
-            matrix_subtract(p_vectors[k], pk_pj_scalar, p_vectors[k]);
+            matrix_subtract(p_vectors[k+1], pk_pj_scalar, p_vectors[k+1]);
         }
     }
 
