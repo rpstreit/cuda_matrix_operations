@@ -159,7 +159,7 @@ std::vector<Matrix *> constructAConjugates(Matrix * A_operator) {
     Matrix *pj_t_A_pk = new Matrix(1, 1);
     Matrix *pj_t_A_pj = new Matrix(1, 1);
     Matrix *pk_pj = new Matrix(length, 1);
-    Matrix *pk_pj_scalar = new Matrix(length, 1);
+    Matrix *pj_scalar = new Matrix(length, 1);
 
     for(int k=0; k<length-1; k++) {
         for(int j=0; j<=k; j++) {
@@ -219,6 +219,7 @@ std::vector<Matrix *> constructAConjugates(Matrix * A_operator) {
  */
 Matrix * conjugateDirection(Matrix * A_operator, Matrix * b_operator) {
     Matrix *xk = new Matrix(A_operator->GetNumRows(), 1); // make a column vector
+    xk->ToZeroes();
     Matrix *xcurrent = new Matrix(A_operator->GetNumRows(), 1); // make a column vector
     int size = A_operator->GetNumRows();
     std::vector<Matrix *> A_conjugates = constructAConjugates(A_operator);
