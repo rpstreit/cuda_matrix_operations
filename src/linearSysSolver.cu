@@ -190,12 +190,12 @@ std::vector<Matrix *> constructAConjugates(Matrix * A_operator) {
             
             // final value of the denominator
             double denominator = pj_t_A_pj->GetFlattened()[0];
-            std::cout << "Denominator: " << numerator << std::endl;
+            std::cout << "Denominator: " << denominator << std::endl;
 
             double multiplier = numerator / denominator;
 
-            matrix_multiply_scalar(pk_pj_scalar, pk_pj, multiplier);
-            matrix_subtract(p_vectors[k+1], pk_pj_scalar, p_vectors[k+1]);
+            matrix_multiply_scalar(pj_scalar, p_vectors[j], multiplier);
+            matrix_subtract(p_vectors[k+1], pj_scalar, p_vectors[k+1]);
         }
     }
 
