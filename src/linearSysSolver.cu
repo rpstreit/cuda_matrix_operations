@@ -161,7 +161,7 @@ std::vector<Matrix *> constructAConjugates(Matrix * A_operator) {
     Matrix *pk_pj = new Matrix(length, 1);
     Matrix *pk_pj_scalar = new Matrix(length, 1);
 
-    for(int k=0; k<length-1; k++) {
+    for(int k=0; k<length; k++) {
         for(int j=0; j<k; j++) {
             // get Pj transpose
             matrix_transpose(p_vectors[j], pj_t);
