@@ -253,7 +253,7 @@ Matrix * conjugateDirection(Matrix * A_operator, Matrix * b_operator) {
         matrix_multiply(A_operator, A_conjugates[k], A_pk);
         matrix_multiply(pk_t, A_pk, pk_t_A_pk);
         ak = pk_t_A_pk->GetFlattened()[0];
-        std::cout << "Denominator: " << pk_t_A_pk << std::endl;
+        std::cout << "Denominator: " << ak << std::endl;
 
         matrix_multiply_scalar(A_conj_scalar, A_conjugates[k], ak);
         matrix_add(xk, A_conj_scalar, xk);
