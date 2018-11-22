@@ -246,7 +246,7 @@ Matrix * conjugateDirection(Matrix * A_operator, Matrix * b_operator) {
 
         matrix_transpose(A_conjugates[k], pk_t);
         matrix_multiply(pk_t, gk, pk_t_gk);
-        int numerator = pk_t_gk->GetFlattened()[0];
+        double numerator = pk_t_gk->GetFlattened()[0];
         std::cout << "Numerator: " << numerator << std::endl;
 
 
