@@ -165,21 +165,32 @@ std::vector<Matrix *> constructAConjugates(Matrix * A_operator) {
         for(int j=0; j<k; j++) {
             // get Pj transpose
             matrix_transpose(p_vectors[j], pj_t);
-            
+            std::cout << "P_vectors[j] transpose:" << std::endl;
+            matrix_print(pj_t);
+
             // Get Pj transpose * A
             matrix_multiply(pj_t, A_operator, pj_t_A);
+            std::cout << "P_vectors * A_operator:" << std::endl;
+            matrix_print(pj_t_A);
 
             // Get (Pj transpose * A) * Pk
             matrix_multiply(pj_t_A, p_vectors[k+1], pj_t_A_pk);
+            std::cout << "P_vectors_j * A_operator * P_vectors_k:" << std::endl;
+            matrix_print(pj_t_A_pk);
 
             // final value of the numerator
             double numerator = pj_t_A_pk->GetFlattened()[0];
+            std::cout << "Numerator: " << numerator << std::endl;
+
 
             // Get (Pj transpose * A) * Pj
             matrix_multiply(pj_t_A, p_vectors[j], pj_t_A_pj);
+            std::cout << "P_vectors_j * A_operator * P_vectors_j:" << std::endl;
+            matrix_print(pj_t_A_pj);
             
             // final value of the denominator
             double denominator = pj_t_A_pj->GetFlattened()[0];
+            std::cout << "Denominator: " << numerator << std::endl;
 
             double multiplier = numerator / denominator;
 
@@ -217,30 +228,38 @@ Matrix * conjugateDirection(Matrix * A_operator, Matrix * b_operator) {
     // Allocated intermediate matrices
     Matrix * A_xk = new Matrix(size, 1);
     Matrix * gk = new Matrix(size, 1);
-    Matrix * pk_t = new Matrix(1, A_conjugates[0]->GetNumRows());
+    gk->ToZeroes();
+    Matrix * pk_t = new Matrix(1, size);
     Matrix * pk_t_gk = new Matrix(1, 1);
-    Matrix * A_pk = new Matrix(A_operator->GetNumCols(), 1);
+    Matrix * A_pk = new Matrix(size, 1);
     Matrix * pk_t_A_pk = new Matrix(1, 1);
-    Matrix * A_conj_scalar = new Matrix(b_operator->GetNumRows(), 1);
+    Matrix * A_conj_scalar = new Matrix(size, 1);
 
     // Limited runtime
     double ak;
-    for(int k=0; k < A_operator->GetNumRows(); k++) {
+    for(int k=0; k < size; k++) {
         // Calculate residue
         matrix_multiply(A_operator, xk, A_xk);
         matrix_subtract(b_operator, A_xk, gk);
+        std::cout << "Residue (gk)" << std::endl;
+        matrix_print(gk);
 
         matrix_transpose(A_conjugates[k], pk_t);
         matrix_multiply(pk_t, gk, pk_t_gk);
         int numerator = pk_t_gk->GetFlattened()[0];
+        std::cout << "Numerator: " << numerator << std::endl;
+
 
         // std::cout << "Debug" << std::endl;
         matrix_multiply(A_operator, A_conjugates[k], A_pk);
         matrix_multiply(pk_t, A_pk, pk_t_A_pk);
         ak = pk_t_A_pk->GetFlattened()[0];
+        std::cout << "Denominator: " << pk_t_A_pk << std::endl;
 
         matrix_multiply_scalar(A_conj_scalar, A_conjugates[k], ak);
         matrix_add(xk, A_conj_scalar, xk);
+        std::cout << "xk so far: " << std::endl;
+        matrix_print(xk);
     }
 
     // Clear intermediates
