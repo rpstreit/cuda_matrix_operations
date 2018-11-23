@@ -27,11 +27,15 @@ int lu_decomposition_run(int argc, Matrix **argv);
 
 int lu_decomposition_verify(int argc, Matrix **argv);
 
-int linear_descent_run(int argc, Matrix **argv);
+int steepest_descent_run(int argc, Matrix **argv);
 
 int conjugate_direction_run(int argc, Matrix **argv);
 
-int linear_solve_verify(int argc, Matrix **argv);
+int inverse_linear_run(int argc, Matrix **argv); 
+
+int steepest_descent_verify(int argc, Matrix **argv);
+
+int conjugate_direction_verify(int argc, Matrix **argv);
 
 int determinant_recur_run(int argc, Matrix **argv);
 
@@ -42,5 +46,7 @@ int determinant_verify(int argc, Matrix **argv);
 int GJE_inverse_run(int argc, Matrix **argv);
 
 int inverse_verify(int argc, Matrix **argv);
+
+int inverse_linear_verify (int argc, Matrix **argv);
 
 #endif

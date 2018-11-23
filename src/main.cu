@@ -29,8 +29,9 @@ enum Operations
 {
   MATMUL,
   LU_DECOMPOSITION, 
-  LINEAR_DESCENT,
+  STEEPEST_DESCENT,
   CONJUGATE_DIRECTION,
+  INVERSE_LINEAR_SOLVER,
   DETERMINANT_RECUR,
   DETERMINANT_LU,
   GJE_INVERSE,
@@ -43,8 +44,9 @@ operation_t ops[COUNT] =
 {
   {"matmul", 2, matmul_run, matmul_verify},
   {"lu_decomposition", 1, lu_decomposition_run, lu_decomposition_verify},
-  {"linear_descent", 2, linear_descent_run, linear_solve_verify},
-  {"conjugate_direction", 2, conjugate_direction_run, linear_solve_verify},
+  {"steepest_descent", 2, steepest_descent_run, steepest_descent_verify},
+  {"conjugate_direction", 2, conjugate_direction_run, conjugate_direction_verify},
+  {"inverse_linear_solver", 2, inverse_linear_run, inverse_linear_verify},
   {"determinant_recur", 1, determinant_recur_run, determinant_verify},
   {"determinant_lu", 1, determinant_lu_run, determinant_verify},
   {"GJE_inverse", 1, GJE_inverse_run, inverse_verify}

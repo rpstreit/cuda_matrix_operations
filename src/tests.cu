@@ -135,7 +135,7 @@ int lu_decomposition_verify(int argc, Matrix **argv)
   return result;
 }
 
-int linear_descent_run(int argc, Matrix **argv)
+int steepest_descent_run(int argc, Matrix **argv)
 {
   if(argc != 2)
   {
@@ -158,7 +158,7 @@ int conjugate_direction_run(int argc, Matrix **argv)
 {
   if(argc != 2)
   {
-    std::cerr << "error: lu decomposition requires 1 argument" << std::endl;
+    std::cerr << "error: conjugate direction requires 2 arguments" << std::endl;
   }
   
   Matrix * A_operator = argv[0];
@@ -167,6 +167,24 @@ int conjugate_direction_run(int argc, Matrix **argv)
   matrix_print(b_operator);
 
   Matrix * output = conjugateDirection(A_operator, b_operator);
+  matrix_print(output);
+
+  delete output;
+
+  return 0;
+}
+int inverse_linear_run(int argc, Matrix **argv) {
+  if(argc != 2)
+  {
+    std::cerr << "error: Inverse Linear System Solver requires e arguments" << std::endl;
+  }
+  
+  Matrix * A_operator = argv[0];
+  matrix_print(A_operator);
+  Matrix * b_operator = argv[1];
+  matrix_print(b_operator);
+
+  Matrix * output = inverseLinearSolver(A_operator, b_operator);
   matrix_print(output);
 
   delete output;
@@ -206,11 +224,11 @@ int determinant_lu_run(int argc, Matrix **argv)
   return 0;
 }
 
-int linear_solve_verify(int argc, Matrix **argv)
+int steepest_descent_verify(int argc, Matrix **argv)
 {
   if(argc != 2)
   {
-    std::cerr << "error: lu decomposition requires 1 argument" << std::endl;
+    std::cerr << "error: Steepest Descent requires 2 arguments" << std::endl;
   }
   
   Matrix * A_operator = argv[0];
@@ -223,25 +241,35 @@ int linear_solve_verify(int argc, Matrix **argv)
   matrix_multiply_cpu(A_operator, output1, x_star);
   bool ok = true;
   for(int i=0; i<x_star->GetNumRows(); i++) {
+    if(abs(x_star->GetFlattened()[i] - b_operator->GetFlattened()[i]) > 1)
+      ok = false;
+  }
+
+  return ok ? 0 : 1;
+}
+
+int conjugate_direction_verify(int argc, Matrix **argv)
+{
+  if(argc != 2)
+  {
+    std::cerr << "error: Conjugate Direction requires 2 argument" << std::endl;
+  }
+  
+  Matrix * A_operator = argv[0];
+  matrix_print(A_operator);
+  Matrix * b_operator = argv[1];
+  matrix_print(b_operator);
+
+  Matrix * output1 = conjugateDirection(A_operator, b_operator);
+  Matrix * x_star = new Matrix(b_operator->GetNumRows(), b_operator->GetNumCols()); 
+  matrix_multiply_cpu(A_operator, output1, x_star);
+  bool ok = true;
+  for(int i=0; i<x_star->GetNumRows(); i++) {
     if(abs(x_star->GetFlattened()[i] - b_operator->GetFlattened()[i]) > .1)
       ok = false;
   }
 
-  // Matrix * output2 = conjugateDirection(A_operator, b_operator);
   return ok ? 0 : 1;
-  // Matrix * combined_eliminator = new Matrix(A_operator->GetNumRows(), A_operator->GetNumCols() + 1);
-  // for(int i=0; i<A_operator->GetNumRows(); i++) {
-  //   for(int j=0; j<A_operator->GetNumCols(); j++) {
-  //     combined_eliminator->GetFlattened()[i * (A_operator->GetNumCols()+1) + j] = A_operator->GetFlattened()[i * A_operator->GetNumCols() + j]
-  //   }
-  // }
-
-  // for(int i=0; i<A_operator->GetNumRows(); i++) {
-  //   combined_eliminator->GetFlattened()[i*(A_operator->GetNumCols() + 1)] = b_operator->GetFlattened()[i];
-  // }
-
-  // matrix_print(combined_eliminator);
-
 }
 
 int determinant_verify(int argc, Matrix **argv)
@@ -305,4 +333,30 @@ int inverse_verify(int argc, Matrix **argv)
 
   delete check;
   return 1;
+}
+
+int inverse_linear_verify (int argc, Matrix **argv) {
+  if(argc != 2)
+  {
+    std::cerr << "error: Inverse Linear System Solver requires e arguments" << std::endl;
+  }
+
+  Matrix * A_operator = argv[0];
+  matrix_print(A_operator);
+  Matrix * b_operator = argv[1];
+  matrix_print(b_operator);
+
+  Matrix * output1 = inverseLinearSolver(A_operator, b_operator);
+  Matrix * x_star = new Matrix(b_operator->GetNumRows(), b_operator->GetNumCols()); 
+  matrix_multiply_cpu(A_operator, output1, x_star);
+  bool ok = true;
+  for(int i=0; i<x_star->GetNumRows(); i++) {
+    if(abs(x_star->GetFlattened()[i] - b_operator->GetFlattened()[i]) > .1)
+      ok = false;
+  }
+
+  return ok ? 0 : 1;
+
+
+  return 0;
 }
