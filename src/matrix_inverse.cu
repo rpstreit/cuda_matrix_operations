@@ -1,4 +1,4 @@
-
+#include <iostream>
 #include "common.h"
 #include <vector>
 __global__ void kcombine(Matrix* matrix, Matrix* identity, Matrix* dest);
@@ -32,6 +32,12 @@ Matrix* GJE_inverse(Matrix* matrix){
     int row = matrix->GetNumRows();
     int col = matrix->GetNumCols();
 
+    // Cuda Timing
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    cudaEventRecord(start);
+
     //get ideneity matrix
     Matrix *identity = new Matrix(row, col);
     matrix_copy(identity, matrix);
@@ -62,6 +68,14 @@ Matrix* GJE_inverse(Matrix* matrix){
         j++;
     }
     getFinalMatrix(combination, matrix);
+    
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+    float elapsed_time;
+    cudaEventElapsedTime(&elapsed_time, start, stop);
+
+    std::cout << "GJE Inverse took " << elapsed_time << "ms" << std::endl;
+
     //matrix_print(matrix);
     delete identity;
     delete combination;
