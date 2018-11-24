@@ -41,6 +41,8 @@ int determinant_verify(int argc, Matrix **argv);
 
 int GJE_inverse_run(int argc, Matrix **argv);
 
+int GJE_all_run(int argc, Matrix **argv);
+
 int inverse_verify(int argc, Matrix **argv);
 
 #endif

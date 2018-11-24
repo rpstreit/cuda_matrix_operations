@@ -10,7 +10,7 @@ __global__ void inverseGJE(int j, int k, double* matrix);
 __global__ void fixRow(double *matrix, int size, int rowId);
 __global__ void fixCol(double *matrix, int size, int colId);
 //__global__ void ksolver(Matrix *matrix, Matrix *identityCol, Matrix* result);
-__global__ void fixAll (double* matrix, int colId, int size);
+__global__ void fixAll (double* matrix, int size, int colId);
 
 void combineIdentity(Matrix* matrix, Matrix* identity, Matrix* dest){
     int cols = dest->GetNumCols();
@@ -52,15 +52,15 @@ Matrix* GJE_inverse(Matrix* matrix){
 
     while(j < size){        
         //prevent divide by 0
-        pivot<<<1, size*2>>>(j,j, flat_matrix, matrix->GetNumCols());
+        pivot<<<1, size>>>(j,j, flat_matrix, matrix->GetNumCols());
         cudaDeviceSynchronize();
 
         //row reduction
-        fixRow<<<1, size*2>>>(flat_matrix, matrix->GetNumCols(), j);
+        fixRow<<<1, size>>>(flat_matrix, matrix->GetNumCols(), j);
         cudaDeviceSynchronize();
 
         //clear column
-        fixCol<<<size*2, size*2>>>(flat_matrix, matrix->GetNumCols(), j);
+        fixCol<<<size, size>>>(flat_matrix, matrix->GetNumCols(), j);
         cudaDeviceSynchronize();
         j++;
     }
@@ -94,15 +94,19 @@ Matrix* GJE_all_Inverse(Matrix* matrix){
 
     while(j < size){        
         //prevent divide by 0
-        pivot<<<1, size*2>>>(j,j, flat_matrix, matrix->GetNumCols());
+        pivot<<<1, size>>>(j,j, flat_matrix, matrix->GetNumCols());
         cudaDeviceSynchronize();
 
-        //row reduction
-        fixRow<<<1, size*2>>>(flat_matrix, matrix->GetNumCols(), j);
+        /*//row reduction
+        fixAll<<<1, size>>>(flat_matrix, matrix->GetNumCols(), j);
         cudaDeviceSynchronize();
 
         //clear column
-        fixCol<<<size*2, size*2>>>(flat_matrix, matrix->GetNumCols(), j);
+        fixCol<<<size, size>>>(flat_matrix, matrix->GetNumCols(), j);
+        cudaDeviceSynchronize();*/
+
+        //row reduce and clear columns
+        fixAll<<<size, size>>>(flat_matrix, matrix->GetNumCols()*2, j);
         cudaDeviceSynchronize();
         j++;
     }
@@ -227,14 +231,23 @@ __global__ void fixCol(double *matrix, int orig_size, int colId){
     }
 }
 
-__global__ void fixAll (double* matrix, int colId, int size){
-    int t = threadIdx.x;
-    int b = blockIdx.x;
+__global__ void fixAll (double* matrix, int size, int colId){
+    //int t = threadIdx.x;
+    //int b = blockIdx.x;
+    int t = blockIdx.x + blockDim.x + threadIdx.x;
+    if(t + colId > size*size){
+        return;
+    }
+
+    int Tindex = threadIdx.x;
+    int b = blockIdx.y;
+
     double d = matrix[colId * size + colId];
 
-    __shared__ double shareRow[512];
+    __shared__ double shareRow[1024];
     
-    shareRow[t] = (matrix[colId * size + t + colId]);
+    //shareRow[t] = (matrix[colId * size + t + colId]);
+    shareRow[Tindex] = matrix[colId * size + t + colId];
     double c = (matrix[b * size + colId])/d;
 
     __syncthreads();
@@ -242,7 +255,9 @@ __global__ void fixAll (double* matrix, int colId, int size){
     if(b == colId){
         matrix[b * size + t + colId] = (matrix[b * size + t +colId])/d;
     } else{
-        matrix[b * size + t + colId] = (matrix[b * size + t + colId]) - (c*shareRow[t]);
+        //matrix[b * size + t + colId] = (matrix[b * size + t + colId]) - (c*shareRow[t]);
+        matrix[b * size + t + colId] = (matrix[b * size + t + colId]) - (c*shareRow[Tindex]);
+
     }
 }
 

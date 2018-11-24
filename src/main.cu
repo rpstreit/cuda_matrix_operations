@@ -34,6 +34,7 @@ enum Operations
   DETERMINANT_RECUR,
   DETERMINANT_LU,
   GJE_INVERSE,
+  GJE_ALL,
   // do not enter anything else after here
 
   COUNT
@@ -47,7 +48,8 @@ operation_t ops[COUNT] =
   {"conjugate_direction", 2, conjugate_direction_run, linear_solve_verify},
   {"determinant_recur", 1, determinant_recur_run, determinant_verify},
   {"determinant_lu", 1, determinant_lu_run, determinant_verify},
-  {"GJE_inverse", 1, GJE_inverse_run, inverse_verify}
+  {"GJE_inverse", 1, GJE_inverse_run, inverse_verify},
+  {"GJE_all", 1, GJE_all_run, inverse_verify}
 };
 
 int main(int argc, char **argv)
