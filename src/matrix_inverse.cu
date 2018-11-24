@@ -1,5 +1,6 @@
 
 #include "common.h"
+#include "linearSysSolver.h"
 #include <vector>
 __global__ void kcombine(Matrix* matrix, Matrix* identity, Matrix* dest);
 __global__ void kseparate(Matrix* matrix, Matrix* final);
@@ -8,6 +9,8 @@ __global__ void pivot(int rowId, int k, double* matrix, int size);
 __global__ void inverseGJE(int j, int k, double* matrix);
 __global__ void fixRow(double *matrix, int size, int rowId);
 __global__ void fixCol(double *matrix, int size, int colId);
+//__global__ void ksolver(Matrix *matrix, Matrix *identityCol, Matrix* result);
+__global__ void fixAll (double* matrix, int colId, int size);
 
 void combineIdentity(Matrix* matrix, Matrix* identity, Matrix* dest){
     int cols = dest->GetNumCols();
@@ -68,7 +71,50 @@ Matrix* GJE_inverse(Matrix* matrix){
     return matrix;
 }
 
-Matrix* linear_system_inverse(Matrix* matrix){
+Matrix* GJE_all_Inverse(Matrix* matrix){
+    int size; int j; 
+    
+    int row = matrix->GetNumRows();
+    int col = matrix->GetNumCols();
+
+    //get ideneity matrix
+    Matrix *identity = new Matrix(row, col);
+    matrix_copy(identity, matrix);
+    identity->ToIdentity();
+
+    //augment origin matrix with identity matrix
+    Matrix *combination = new Matrix(row, col * 2);
+    combineIdentity(matrix, identity, combination);
+    //matrix_print(combination);
+
+    j = 0;
+    size = matrix->GetNumCols();
+
+    double* flat_matrix = combination->GetFlattened();
+
+    while(j < size){        
+        //prevent divide by 0
+        pivot<<<1, size*2>>>(j,j, flat_matrix, matrix->GetNumCols());
+        cudaDeviceSynchronize();
+
+        //row reduction
+        fixRow<<<1, size*2>>>(flat_matrix, matrix->GetNumCols(), j);
+        cudaDeviceSynchronize();
+
+        //clear column
+        fixCol<<<size*2, size*2>>>(flat_matrix, matrix->GetNumCols(), j);
+        cudaDeviceSynchronize();
+        j++;
+    }
+    getFinalMatrix(combination, matrix);
+    //matrix_print(matrix);
+    delete identity;
+    delete combination;
+    return matrix;
+
+}
+
+/*Matrix* linear_system_inverse(Matrix* matrix){
     int row = matrix -> GetNumCols();
     int col = matrix -> GetNumRows();
 
@@ -83,7 +129,7 @@ Matrix* linear_system_inverse(Matrix* matrix){
 
     //call linear solver with Ax = I[i]
     Matrix *result = new Matrix(row, col);
-    ksolver<<<1, cols>>>(matrix, identityCol, result);    
+    ksolver<<<1, col>>>(matrix, identityCol, result);    
     cudaDeviceSynchronize();
 
     //transpose result from solver
@@ -93,7 +139,9 @@ Matrix* linear_system_inverse(Matrix* matrix){
     delete identityCol;
     delete result;
     return matrix;
-}
+}*/
+
+
 
 /**
  * Combine original matrix with its identity in cuda 
@@ -179,7 +227,26 @@ __global__ void fixCol(double *matrix, int orig_size, int colId){
     }
 }
 
-__global__ void ksolver(Matrix *matrix, Matrix *identityCol, Matrix* result){
+__global__ void fixAll (double* matrix, int colId, int size){
+    int t = threadIdx.x;
+    int b = blockIdx.x;
+    double d = matrix[colId * size + colId];
+
+    __shared__ double shareRow[512];
+    
+    shareRow[t] = (matrix[colId * size + t + colId]);
+    double c = (matrix[b * size + colId])/d;
+
+    __syncthreads();
+    
+    if(b == colId){
+        matrix[b * size + t + colId] = (matrix[b * size + t +colId])/d;
+    } else{
+        matrix[b * size + t + colId] = (matrix[b * size + t + colId]) - (c*shareRow[t]);
+    }
+}
+
+/*__global__ void ksolver(Matrix *matrix, Matrix *identityCol, Matrix* result){
     int cols = matrix -> GetNumCols();
 
     int colNum = threadIdx.x;
@@ -188,9 +255,9 @@ __global__ void ksolver(Matrix *matrix, Matrix *identityCol, Matrix* result){
 
     //get n column
     for(int i = 0; i < cols; i++){
-        specificCol->GetFlattened()[i] = matrix->GetFlattened()[colNum * col + i];
+        specificCol->GetFlattened()[i] = matrix->GetFlattened()[colNum * cols + i];
     }
 
-    result->GetFlattened()[colNum * col] = (conjugateDirection(matrix, specificCol))->GetFlattened();
+    result->GetFlattened()[colNum * cols] = (conjugateDirection(matrix, specificCol))->GetFlattened();
     
-}
+}*/
