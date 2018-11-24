@@ -68,6 +68,33 @@ Matrix* GJE_inverse(Matrix* matrix){
     return matrix;
 }
 
+Matrix* linear_system_inverse(Matrix* matrix){
+    int row = matrix -> GetNumCols();
+    int col = matrix -> GetNumRows();
+
+    //get identity matrix
+    Matrix *identity = new Matrix(row, col);
+    matrix_copy(identity, matrix);
+    identity->ToIdentity();
+
+    //transpose identity matrix
+    Matrix *identityCol = new Matrix(row, col);
+    matrix_transpose(identity, identityCol);
+
+    //call linear solver with Ax = I[i]
+    Matrix *result = new Matrix(row, col);
+    ksolver<<<1, cols>>>(matrix, identityCol, result);    
+    cudaDeviceSynchronize();
+
+    //transpose result from solver
+    matrix_transpose(result, matrix);
+
+    delete identity;
+    delete identityCol;
+    delete result;
+    return matrix;
+}
+
 /**
  * Combine original matrix with its identity in cuda 
  */
@@ -150,4 +177,20 @@ __global__ void fixCol(double *matrix, int orig_size, int colId){
         }
         matrix[i*size+j] = colj[i];
     }
+}
+
+__global__ void ksolver(Matrix *matrix, Matrix *identityCol, Matrix* result){
+    int cols = matrix -> GetNumCols();
+
+    int colNum = threadIdx.x;
+    
+    Matrix *specificCol = new Matrix(1, cols);
+
+    //get n column
+    for(int i = 0; i < cols; i++){
+        specificCol->GetFlattened()[i] = matrix->GetFlattened()[colNum * col + i];
+    }
+
+    result->GetFlattened()[colNum * col] = (conjugateDirection(matrix, specificCol))->GetFlattened();
+    
 }

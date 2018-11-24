@@ -205,7 +205,7 @@ std::vector<Matrix *> constructAConjugates(Matrix * A_operator) {
  * @param  b_operator b nx1 vector
  * @return            x nx1 vector of solution
  */
-Matrix * conjugateDirection(Matrix * A_operator, Matrix * b_operator) {
+__device__ __host__ Matrix * conjugateDirection(Matrix * A_operator, Matrix * b_operator) {
     
     Matrix *x0 = new Matrix(A_operator->GetNumRows(), 1); // make a column vector
     x0->GetFlattened()[0] = 1;
