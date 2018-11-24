@@ -60,9 +60,9 @@ Matrix* GJE_inverse(Matrix* matrix){
         fixCol<<<size*2, size>>>(flat_matrix, matrix->GetNumCols(), j);
         cudaDeviceSynchronize();
         j++;
-	std::cout << "J is " << j << std::endl;
-	matrix_print(combination);
-	std::cout << std::endl;
+	// std::cout << "J is " << j << std::endl;
+	// matrix_print(combination);
+	// std::cout << std::endl;
     }
     //matrix_print(combination);
     getFinalMatrix(combination, matrix);
@@ -140,19 +140,19 @@ __global__ void fixCol(double *matrix, int orig_size, int colId){
     int i = threadIdx.x; 
     int j = blockIdx.x;
 
-    double col[512] ; //colId col
+    double col; //colId col
     double AColIdj; //jth element of colId row
-    double colj[512]; //jth column 
+    double colj; //jth column 
 
     int size = orig_size * 2;
 
-    col[i] = matrix[i * size + colId];
-    if(col[i] != 0){
-        colj[i] = matrix[i*size+j];
+    col = matrix[i * size + colId];
+    if(col != 0){
+        colj = matrix[i*size+j];
         AColIdj = matrix[colId*size+j];
         if(i != colId){
-            colj[i] = colj[i] - AColIdj * col[i];
+            colj = colj - AColIdj * col;
         }
-        matrix[i*size+j] = colj[i];
+        matrix[i*size+j] = colj;
     }
 }

@@ -278,7 +278,7 @@ void matrix_multiply_scalar(Matrix *output, Matrix *input, double scale) {
 void matrix_floor_small(Matrix* output, Matrix *input) {
   int num_blocks = (input->GetNumRows() * input->GetNumCols() + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
   // std::cout << "blocks are:" << num_blocks << std::endl;
-  kfloor<<<num_blocks, THREADS_PER_BLOCK>>>(output, input, scale);
+  kfloor<<<num_blocks, THREADS_PER_BLOCK>>>(output, input);
   cudaDeviceSynchronize();
 }
 
