@@ -347,6 +347,7 @@ int inverse_linear_verify (int argc, Matrix **argv) {
   matrix_print(b_operator);
 
   Matrix * output1 = inverseLinearSolver(A_operator, b_operator);
+  matrix_print(output1);
   Matrix * x_star = new Matrix(b_operator->GetNumRows(), b_operator->GetNumCols()); 
   matrix_multiply_cpu(A_operator, output1, x_star);
   bool ok = true;
@@ -356,7 +357,4 @@ int inverse_linear_verify (int argc, Matrix **argv) {
   }
 
   return ok ? 0 : 1;
-
-
-  return 0;
 }

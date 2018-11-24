@@ -176,10 +176,10 @@ std::vector<Matrix *> constructAConjugates(Matrix * A_operator) {
     delete pj_t_A_pj;
     delete pk_pj;
     delete pj_scalar;
-    std::cout << "A_conjugate vectors" << std::endl;
+    /*std::cout << "A_conjugate vectors" << std::endl;
     for(int i=0; i<length; i++) {
         matrix_print(p_vectors[i]);
-    }
+    }*/
     return p_vectors;
 }
 
@@ -239,8 +239,8 @@ Matrix * conjugateDirection(Matrix * A_operator, Matrix * b_operator) {
 
         matrix_multiply_scalar(A_conj_scalar, A_conjugates[k], numerator/ak);
         matrix_add(xk, A_conj_scalar, xk);
-        std::cout << "xk so far: " << std::endl;
-        matrix_print(xk);
+        // std::cout << "xk so far: " << std::endl;
+        // matrix_print(xk);
     }
 
     cudaEventRecord(stop, 0);
@@ -274,11 +274,12 @@ Matrix * inverseLinearSolver(Matrix * A_operator, Matrix * b_operator) {
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
     cudaEventRecord(start, 0);
-
-    Matrix *inverse = GJE_inverse(A_operator);
+    Matrix *inverse = new Matrix(*A_operator);
+    inverse = GJE_inverse(inverse);
+    matrix_print(inverse);    
     Matrix * solution = new Matrix(*b_operator);
     matrix_multiply(inverse, b_operator, solution);
-    
+
     cudaEventRecord(stop, 0);
     float elapsed_time;
     cudaEventElapsedTime(&elapsed_time, start, stop);
