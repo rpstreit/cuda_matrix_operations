@@ -1,4 +1,3 @@
-
 #include "common.h"
 #include <vector>
 __global__ void kcombine(Matrix* matrix, Matrix* identity, Matrix* dest);
@@ -49,15 +48,15 @@ Matrix* GJE_inverse(Matrix* matrix){
 
     while(j < size){        
         //prevent divide by 0
-        pivot<<<1, size>>>(j,j, flat_matrix, matrix->GetNumCols());
+        pivot<<<1, size*2>>>(j,j, flat_matrix, matrix->GetNumCols());
         cudaDeviceSynchronize();
 
         //row reduction
-        fixRow<<<1, size>>>(flat_matrix, matrix->GetNumCols(), j);
+        fixRow<<<1, size*2>>>(flat_matrix, matrix->GetNumCols(), j);
         cudaDeviceSynchronize();
 
         //clear column
-        fixCol<<<size, size>>>(flat_matrix, matrix->GetNumCols(), j);
+        fixCol<<<size*2, size*2>>>(flat_matrix, matrix->GetNumCols(), j);
         cudaDeviceSynchronize();
         j++;
     }
