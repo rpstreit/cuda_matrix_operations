@@ -1,3 +1,4 @@
+#include <iostream>
 #include "common.h"
 #include <vector>
 __global__ void kcombine(Matrix* matrix, Matrix* identity, Matrix* dest);
@@ -56,10 +57,14 @@ Matrix* GJE_inverse(Matrix* matrix){
         cudaDeviceSynchronize();
 
         //clear column
-        fixCol<<<size*2, size*2>>>(flat_matrix, matrix->GetNumCols(), j);
+        fixCol<<<size*2, size>>>(flat_matrix, matrix->GetNumCols(), j);
         cudaDeviceSynchronize();
         j++;
+	std::cout << "J is " << j << std::endl;
+	matrix_print(combination);
+	std::cout << std::endl;
     }
+    //matrix_print(combination);
     getFinalMatrix(combination, matrix);
     //matrix_print(matrix);
     delete identity;
@@ -119,7 +124,8 @@ __global__ void fixRow(double *matrix, int orig_size, int rowId){
 
     int colId = threadIdx.x;
     Rowi[colId] = matrix[size*rowId + colId];
-    diagonal = matrix[size*rowId+rowId];
+    if(threadIdx.x == 0)
+        diagonal = matrix[size*rowId+rowId];
     __syncthreads();
     
     //Divide row by diagonal element
@@ -134,9 +140,9 @@ __global__ void fixCol(double *matrix, int orig_size, int colId){
     int i = threadIdx.x; 
     int j = blockIdx.x;
 
-    __shared__ double col[512] ; //colId col
-    __shared__ double AColIdj; //jth element of colId row
-    __shared__ double colj[512]; //jth column 
+    double col[512] ; //colId col
+    double AColIdj; //jth element of colId row
+    double colj[512]; //jth column 
 
     int size = orig_size * 2;
 
