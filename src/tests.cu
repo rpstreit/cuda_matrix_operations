@@ -317,8 +317,8 @@ int inverse_verify(int argc, Matrix **argv)
   }
   Matrix * A_operator = argv[0];
   matrix_print(A_operator);
-
-  Matrix * output = GJE_inverse(A_operator);
+  Matrix *inverse = new Matrix(*A_operator);
+  Matrix * output = GJE_inverse(inverse);
   matrix_print(output);
 
   Matrix* check = new Matrix(A_operator->GetNumRows(), A_operator->GetNumCols());
