@@ -13,7 +13,7 @@
  * @return            an nx1 vector of x
  */
 Matrix * steepestDescent(Matrix *A_operator, Matrix *b_operator) {
-    std::cout << "Starting linear descent" << std::endl;
+    std::cout << "Starting steepest descent" << std::endl;
     // First define a max acceptable error
     const double error = .001;
     // matrix_print(A_operator);
@@ -71,7 +71,7 @@ Matrix * steepestDescent(Matrix *A_operator, Matrix *b_operator) {
         // matrix_print(A_dk_1);
 
 
-        double scalar = ((double)dk_1sq / (double)denominator) / (50.0 * size);
+        double scalar = ((double)dk_1sq / (double)denominator) / (50.0 * sqrt(size));
         // std::cout << "\nScalar is " << scalar << std::endl;
         // std::cout << "Numerator is " << dk_1sq << std::endl;
         // std::cout << "Denominator is " << denominator << std::endl;
@@ -83,17 +83,18 @@ Matrix * steepestDescent(Matrix *A_operator, Matrix *b_operator) {
         // Update x
 
         // Limit the number of iterations
-        if(count++ > 10000) {
+        if(count++ > 100000) {
             std::cout << "Descent iteration limit reached" << std::endl;
             break;
         }
     } while(norm(d_vector) > error);
 
     cudaEventRecord(stop, 0);
+    cudaEventSynchronize(stop);
     float elapsed_time;
     cudaEventElapsedTime(&elapsed_time, start, stop);
 
-    std::cout << "Conjugate Direction took " << elapsed_time << "ms"<< std::endl;
+    std::cout << "Steepest Descent took " << elapsed_time << "ms"<< std::endl;
 
 
     delete x0;
@@ -209,7 +210,7 @@ Matrix * conjugateDirection(Matrix * A_operator, Matrix * b_operator) {
     cudaEvent_t start, stop;
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
-    cudaEventRecord(start, 0);
+    cudaEventRecord(start);
 
     std::vector<Matrix *> A_conjugates = constructAConjugates(A_operator);
     // we will have our guess of xk be 0 so that gk = b
@@ -243,7 +244,8 @@ Matrix * conjugateDirection(Matrix * A_operator, Matrix * b_operator) {
         // matrix_print(xk);
     }
 
-    cudaEventRecord(stop, 0);
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
     float elapsed_time;
     cudaEventElapsedTime(&elapsed_time, start, stop);
 
@@ -273,14 +275,15 @@ Matrix * inverseLinearSolver(Matrix * A_operator, Matrix * b_operator) {
     cudaEvent_t start, stop;
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
-    cudaEventRecord(start, 0);
+    cudaEventRecord(start);
     Matrix *inverse = new Matrix(*A_operator);
     inverse = GJE_inverse(inverse);
     matrix_print(inverse);    
     Matrix * solution = new Matrix(*b_operator);
     matrix_multiply(inverse, b_operator, solution);
 
-    cudaEventRecord(stop, 0);
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
     float elapsed_time;
     cudaEventElapsedTime(&elapsed_time, start, stop);
 
