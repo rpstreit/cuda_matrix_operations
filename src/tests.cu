@@ -324,6 +324,7 @@ int inverse_verify(int argc, Matrix **argv)
   Matrix* check = new Matrix(A_operator->GetNumRows(), A_operator->GetNumCols());
 
   matrix_multiply(A_operator, output, check);
+  matrix_floor_small(check, check);
   A_operator->ToIdentity();
 
   if (matrix_equals(check, A_operator, 0.01)){
