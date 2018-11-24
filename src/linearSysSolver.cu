@@ -278,7 +278,7 @@ Matrix * inverseLinearSolver(Matrix * A_operator, Matrix * b_operator) {
     cudaEventRecord(start);
     Matrix *inverse = new Matrix(*A_operator);
     inverse = GJE_inverse(inverse);
-    matrix_print(inverse);    
+    // matrix_print(inverse);    
     Matrix * solution = new Matrix(*b_operator);
     matrix_multiply(inverse, b_operator, solution);
 
