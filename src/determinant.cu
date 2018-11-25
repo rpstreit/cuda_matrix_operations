@@ -9,10 +9,10 @@
 //#include <tuple>
 
 // sequential implementation of recursive Laplace Expansion
-int determinant_recur(Matrix *A)
+double determinant_recur(Matrix *A)
 {
 	int level = A->GetNumCols(); // represents current level
-	int result;
+	double result;
 
 	if (level == 1)
 	{
@@ -31,7 +31,7 @@ int determinant_recur(Matrix *A)
 		{
 			// create minor matrix of size N - 1 here, allocate memory here
 			// pass it into kmatrix_minor and have it populate it
-			Matrix *minor_intermediate = new Matrix(level - 1, level - 1);
+			Matrix *minor_inter = new Matrix(level - 1, level - 1);
 
 			for (int i = 1; i < level; i++) // always skip first row
 			{
@@ -42,13 +42,15 @@ int determinant_recur(Matrix *A)
 					if (j == j1)
 						continue;
 
-					(*minor_intermediate)[i - 1][j2] = (*A)[i][j];
+					(*minor_inter)[i - 1][j2] = (*A)[i][j];
 					j2++;
 				}
 			}
 
 			// calculate determinant from (N - 1)-size minor matrix
-			result += pow(-1, 1 + j1) * (*A)[0][j1] * determinant_recur(minor_intermediate);
+			double inter_value = determinant_recur(minor_inter);
+			printf("inter_value %f\n", inter_value);	
+			result += pow(-1, 1 + j1 + 1) * (*A)[0][j1] * inter_value;
 
 			// free all minor matrices here after recursive call is returning from base case
 			//delete minor_intermediate;
@@ -58,10 +60,10 @@ int determinant_recur(Matrix *A)
 		// __syncthreads();
 	}
 
-	return result;
+	return ceil(result);
 }
 
-int determinant_lu(Matrix *A)
+double determinant_lu(Matrix *A)
 {
 	Matrix *P = new Matrix(A->GetNumCols(), A->GetNumCols());
 	Matrix *L = new Matrix(A->GetNumCols(), A->GetNumCols());
@@ -72,10 +74,10 @@ int determinant_lu(Matrix *A)
 	//Matrix *P_inv = GJE_inverse(P);
 
 	int P_inv_det = determinant_recur(P);
-  int L_det = determinant_recur(L);
+  	int L_det = determinant_recur(L);
 	int U_det = determinant_recur(U);
 
-  printf("P_inv_det %d, L_det %d, U_det %d\n", P_inv_det, L_det, U_det);
+  	printf("P_inv_det %d, L_det %d, U_det %d\n", P_inv_det, L_det, U_det);
 
 	delete P;
 	delete L;
