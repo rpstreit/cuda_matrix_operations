@@ -13,8 +13,8 @@ __global__ void kmatrix_multiply_mapsums(Matrix *A, Matrix *B, double *result);
 __global__ void kmatrix_multiply_reducesums(double *in, int depth, double *out);
 __global__ void kmatrix_multiply_writeresult(double *raw, Matrix *result);
 __global__ void kmatrix_slicecolumn(Matrix *A, double *slice, int col_idx);
-__global__ void kmatrix_writeblock(Matrix *dest, Matrix *src, BlockLoc loc);
-__global__ void kmatrix_sliceblock(Matrix *src, Matrix *dest, BlockLoc loc);
+__global__ void kmatrix_writeblock(Matrix *dest, Matrix *src, int tl_row, int tl_col);
+__global__ void kmatrix_sliceblock(Matrix *src, Matrix *dest, int tl_row, int tl_col);
 __global__ void kmatrix_copy(Matrix *dest, Matrix *src);
 __global__ void kmatrix_getelementarymatrix(Matrix *A, Matrix *result, int col);
 __global__ void kmatrix_invertelementarymatrix(Matrix *A, Matrix *result, int col);
@@ -75,26 +75,81 @@ void matrix_copy(Matrix *dest, Matrix *src)
   cudaDeviceSynchronize();
 }
 
-
-void matrix_sliceblock(Matrix *src, Matrix *dest, BlockLoc loc)
+void matrix_sliceblock(Matrix *src, Matrix *dest, int tl_row, int tl_col)
 {
   int cols = dest->GetNumCols();
   int rows = dest->GetNumRows();
 
   int num_blocks = (rows * cols + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
 
-  kmatrix_sliceblock<<<num_blocks, THREADS_PER_BLOCK>>>(src, dest, loc);
+  kmatrix_sliceblock<<<num_blocks, THREADS_PER_BLOCK>>>(src, dest, tl_row, tl_col);
   cudaDeviceSynchronize();
 }
 
-void matrix_writeblock(Matrix *dest, Matrix *src, BlockLoc loc)
+void matrix_sliceblock(Matrix *src, Matrix *dest, BlockLoc loc)
+{
+  int tl_row, tl_col;
+  switch (loc)
+  {
+		case UPPERLEFT:
+			tl_row = 0;
+			tl_col = 0;
+			break;
+
+		case UPPERRIGHT:
+			tl_row = 0;
+			tl_col = src->GetNumCols() - dest->GetNumCols();
+			break;
+
+		case BOTTOMLEFT:
+			tl_row = src->GetNumRows() - dest->GetNumRows();
+			tl_col = 0;
+			break;
+
+		case BOTTOMRIGHT:
+			tl_row = src->GetNumRows() - dest->GetNumRows();
+			tl_col = src->GetNumCols() - dest->GetNumCols();
+			break;
+  }
+  matrix_sliceblock(src, dest, tl_row, tl_col);
+}
+
+void matrix_writeblock(Matrix *dest, Matrix *src, int tl_row, int tl_col)
 {
   int cols = src->GetNumCols();
   int rows = src->GetNumRows();
 
   int num_blocks = (rows * cols + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-  kmatrix_writeblock<<<num_blocks, THREADS_PER_BLOCK>>>(dest, src, loc);
+  kmatrix_writeblock<<<num_blocks, THREADS_PER_BLOCK>>>(dest, src, tl_row, tl_col);
   cudaDeviceSynchronize();
+}
+
+void matrix_writeblock(Matrix *dest, Matrix *src, BlockLoc loc)
+{
+	int tl_row, tl_col;
+  switch (loc)
+  {
+		case UPPERLEFT:
+			tl_row = 0;
+			tl_col = 0;
+			break;
+
+		case UPPERRIGHT:
+			tl_row = 0;
+			tl_col = src->GetNumCols() - dest->GetNumCols();
+			break;
+
+		case BOTTOMLEFT:
+			tl_row = src->GetNumRows() - dest->GetNumRows();
+			tl_col = 0;
+			break;
+
+		case BOTTOMRIGHT:
+			tl_row = src->GetNumRows() - dest->GetNumRows();
+			tl_col = src->GetNumCols() - dest->GetNumCols();
+			break;
+  }
+	matrix_writeblock(dest, src, tl_row, tl_col);
 }
 
 void matrix_slicecolumn(Matrix *A, double *slice, int col_idx)
@@ -455,7 +510,7 @@ __global__ void kvector_square(Matrix *src, Matrix *dest)
 }
 
 
-__global__ void kmatrix_sliceblock(Matrix *src, Matrix *dest, BlockLoc loc)
+__global__ void kmatrix_sliceblock(Matrix *src, Matrix *dest, int tl_row, int tl_col)
 {
  	int idx = threadIdx.x + blockIdx.x * blockDim.x;
 	bool past_length = idx < dest->GetNumRows() * dest->GetNumCols() ? false : true;
@@ -463,36 +518,13 @@ __global__ void kmatrix_sliceblock(Matrix *src, Matrix *dest, BlockLoc loc)
   int row = idx / dest->GetNumCols();
   int col = idx % dest->GetNumCols();
 
-  int start_row, start_col;
   if (!past_length)
   {
-    switch(loc)
-    {
-      case UPPERLEFT:
-        start_row = 0;
-        start_col = 0;
-        break;
-
-      case UPPERRIGHT:
-        start_row = 0;
-        start_col = src->GetNumCols() - dest->GetNumCols();
-        break;
-
-      case BOTTOMLEFT:
-        start_row = src->GetNumRows() - dest->GetNumRows();
-        start_col = 0;
-        break;
-
-      case BOTTOMRIGHT:
-        start_row = src->GetNumRows() - dest->GetNumRows();
-        start_col = src->GetNumCols() - dest->GetNumCols();
-        break;
-    }
-    (*dest)[row][col] = (*src)[start_row + row][start_col + col];
+    (*dest)[row][col] = (*src)[tl_row + row][tl_col + col];
   }
 }
 
-__global__ void kmatrix_writeblock(Matrix *dest, Matrix *src, BlockLoc loc)
+__global__ void kmatrix_writeblock(Matrix *dest, Matrix *src, int tl_row, int tl_col)
 { 
  	int idx = threadIdx.x + blockIdx.x * blockDim.x;
 	bool past_length = idx < src->GetNumRows() * src->GetNumCols() ? false : true;
@@ -500,32 +532,9 @@ __global__ void kmatrix_writeblock(Matrix *dest, Matrix *src, BlockLoc loc)
   int row = idx / src->GetNumCols();
   int col = idx % src->GetNumCols();
 
-  int start_row, start_col;
   if (!past_length)
   {
-    switch(loc)
-    {
-      case UPPERLEFT:
-        start_row = 0;
-        start_col = 0;
-        break;
-
-      case UPPERRIGHT:
-        start_row = 0;
-        start_col = dest->GetNumCols() - src->GetNumCols();
-        break;
-
-      case BOTTOMLEFT:
-        start_row = dest->GetNumRows() - src->GetNumRows();
-        start_col = 0;
-        break;
-
-      case BOTTOMRIGHT:
-        start_row = dest->GetNumRows() - src->GetNumRows();
-        start_col = dest->GetNumCols() - src->GetNumCols();
-        break;
-    }
-    (*dest)[start_row + row][start_col + col] = (*src)[row][col];
+    (*dest)[tl_row + row][tl_col + col] = (*src)[row][col];
   }
 }
 

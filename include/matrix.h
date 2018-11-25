@@ -29,7 +29,8 @@ class Matrix : public Managed
     __host__ __device__ double * GetFlattened(void);
     __host__ __device__ int GetNumCols(void);
     __host__ __device__ int GetNumRows(void);
-
+		__host__ __device__ void ShrinkNumRows(int newNumRows);
+		__host__ __device__ void ShrinkNumCols(int newNumCols);
 };
 
 #endif

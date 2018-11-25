@@ -146,6 +146,24 @@ __host__ __device__ int Matrix::GetNumRows(void)
   return this->num_rows;
 }
 
+__host__ __device__ void Matrix::ShrinkNumRows(int newNumRows)
+{
+  if (newNumRows > this->num_rows)
+  {
+    return;
+  }
+  this->num_rows = newNumRows;
+}
+
+__host__ __device__ void Matrix::ShrinkNumCols(int newNumCols)
+{
+  if (newNumCols > this->num_cols)
+  {
+    return;
+  }
+  this->num_cols = newNumCols;
+}
+
 __global__ void kset_zeroes(double *A)
 { 
  	int idx = threadIdx.x + blockIdx.x * blockDim.x;
