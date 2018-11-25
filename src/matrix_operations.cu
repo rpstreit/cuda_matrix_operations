@@ -137,17 +137,17 @@ void matrix_writeblock(Matrix *dest, Matrix *src, BlockLoc loc)
 
 		case UPPERRIGHT:
 			tl_row = 0;
-			tl_col = src->GetNumCols() - dest->GetNumCols();
+			tl_col = dest->GetNumCols() - src->GetNumCols();
 			break;
 
 		case BOTTOMLEFT:
-			tl_row = src->GetNumRows() - dest->GetNumRows();
+			tl_row = dest->GetNumRows() - src->GetNumRows();
 			tl_col = 0;
 			break;
 
 		case BOTTOMRIGHT:
-			tl_row = src->GetNumRows() - dest->GetNumRows();
-			tl_col = src->GetNumCols() - dest->GetNumCols();
+			tl_row = dest->GetNumRows() - src->GetNumRows();
+			tl_col = dest->GetNumCols() - src->GetNumCols();
 			break;
   }
 	matrix_writeblock(dest, src, tl_row, tl_col);

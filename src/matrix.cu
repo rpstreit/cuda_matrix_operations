@@ -24,7 +24,7 @@ Matrix::Matrix(const Matrix &copy) :
   num_cols(copy.num_cols),
   flat(0)
 {
-  cudaMallocManaged(&flat, sizeof(double) * copy.num_rows * copy.num_cols);
+  gpuErrchk(cudaMallocManaged(&flat, sizeof(double) * copy.num_rows * copy.num_cols));
   for (int i = 0; i < this->num_rows; ++i)
   {
     for (int j = 0; j < this->num_cols; ++j)
@@ -43,7 +43,7 @@ Matrix::Matrix(int num_rows, int num_cols, bool identity) :
   num_cols(num_cols),
   flat(0)
 {
-  cudaMallocManaged(&flat, sizeof(double) * num_rows * num_cols);
+  gpuErrchk(cudaMallocManaged(&flat, sizeof(double) * num_rows * num_cols));
 
   if (identity)
   {
@@ -115,7 +115,7 @@ void Matrix::Parse(const char* file)
   matrix >> this->num_rows;
   matrix >> this->num_cols;
 
-  cudaMallocManaged(&flat, sizeof(double) * num_rows * num_cols);
+  gpuErrchk(cudaMallocManaged(&flat, sizeof(double) * num_rows * num_cols));
   for (int i = 0; i < this->num_rows; ++i)
   {
     for (int j = 0; j < this->num_cols; ++j)

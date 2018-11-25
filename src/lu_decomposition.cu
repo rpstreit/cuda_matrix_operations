@@ -94,9 +94,18 @@ void lu_decomposition(Matrix *A, Matrix *L, Matrix *U, Matrix *P)
 
 void lu_blockeddecomposition(Matrix *A, Matrix *L, Matrix *U, Matrix *P, int r)
 {
+  if (A->GetNumCols() < r)
+  {
+    r = A->GetNumCols();
+  }
+  if (r < 2)
+  {
+    std::cerr << "lu_blockdecomposition: r width of submatrices must be greater than 1" << std::endl;
+    exit(EXIT_FAILURE);
+  }
   if (A->GetNumRows() < A->GetNumCols())
   {
-    std::cerr << "lu_decomposition: matrix dimensions on A are ill formed for LU Decomposition" << std::endl;
+    std::cerr << "lu_blockdecomposition: matrix dimensions on A are ill formed for LU Decomposition" << std::endl;
     exit(EXIT_FAILURE);
   }
   if (A->GetNumRows() != L->GetNumRows()
@@ -114,114 +123,158 @@ void lu_blockeddecomposition(Matrix *A, Matrix *L, Matrix *U, Matrix *P, int r)
   U->ToZeroes();
 
 	Matrix *U_tl = new Matrix(r, r);
-	Matrix *U_tl_inter = new Matrix(r, r);	
 	Matrix *L_tl = new Matrix(r, r);
-	Matrix *L_tl_inter = new Matrix(r, r);	
-	Matrix *P_tl = new Matrix(r, r);
-	Matrix *P_tl_inter = new Matrix(r, r);	
 	Matrix *A_tr = new Matrix(r, A->GetNumCols() - r);
 	Matrix *U_tr = new Matrix(r, A->GetNumCols() - r);
-	Matrix *U_tr_inter = new Matrix(r, A->GetNumCols() - r);
-	Matrix *A_bl = new Matrix(A->GetNumRows() - r, r);
 	Matrix *L_bl = new Matrix(A->GetNumRows() - r, r);
-	Matrix *L_bl_inter = new Matrix(A->GetNumRows() - r, r);
-	Matrix *A_br = new Matrix(A->GetNumRows() - r, A->GetNumCols( ) - r);
-	Matrix *A_br_inter = new Matrix(A->GetNumRows() - r, A->GetNumCols() - r);
+	Matrix *A_loop = new Matrix(A->GetNumRows(), A->GetNumCols());
+	Matrix *A_loop_inter = new Matrix(A->GetNumRows(), A->GetNumCols());
+	Matrix *L_loop = new Matrix(A->GetNumRows(), A->GetNumCols());
+	Matrix *E_loop = new Matrix(A->GetNumRows(), A->GetNumCols());
+	Matrix *E_loop_invert = new Matrix(A->GetNumRows(), A->GetNumCols());
+//	Matrix *P_loop = new Matrix(A->GetNumRows(), A->GetNumCols());
+  Matrix *A_copy = new Matrix(A->GetNumRows(), A->GetNumCols());
   double *column_slice;
-  cudaMalloc((void **) &column_slice, sizeof(double) * r);
+  cudaMalloc((void **) &column_slice, sizeof(double) * A->GetNumRows());
 
-  for (int i = 0; i < A->GetNumCols(); i += r)
+  matrix_copy(A_loop, A);
+  matrix_copy(A_copy, A);
+
+//  P_loop->ToIdentity();
+
+  int o_r = r;
+  for (int i = 0; i < A->GetNumCols(); i += o_r)
   {
-		if (i > A->GetNumCols() - r)
-		{
-			r = A->GetNumCols() - i;
-			U_tl->ShrinkNumCols(r);
-			U_tl->ShrinkNumRows(r);
-			U_tl_inter->ShrinkNumCols(r);
-			U_tl_inter->ShrinkNumRows(r);
-			P_tl->ShrinkNumCols(r);
-			P_tl->ShrinkNumRows(r);
-			P_tl_inter->ShrinkNumCols(r);
-			P_tl_inter->ShrinkNumRows(r);
-			L_tl->ShrinkNumCols(r);
-			L_tl->ShrinkNumRows(r);
-			L_tl_inter->ShrinkNumCols(r);
-			L_tl_inter->ShrinkNumRows(r);
-
-			U_tr->ShrinkNumRows(r);
-			U_tr_inter->ShrinkNumRows(r);
-			A_tr->ShrinkNumRows(r);
-			L_bl->ShrinkNumCols(r);
-			L_bl_inter->ShrinkNumCols(r);
-			A_bl->ShrinkNumCols(r);
-		}
-		A_tr->ShrinkNumCols(A->GetNumCols() - (i + r));
+    if (A->GetNumCols() <= i + r)
+    {
+      r = A->GetNumCols() - i;
+      L_tl->ShrinkNumRows(r);
+      L_tl->ShrinkNumCols(r);
+      U_tl->ShrinkNumRows(r);
+      U_tl->ShrinkNumCols(r);
+      //std::cout << "\nNEW r: " << r << std::endl;
+    }
 		U_tr->ShrinkNumCols(A->GetNumCols() - (i + r));
-		U_tr_inter->ShrinkNumCols(A->GetNumCols() - (i + r));
-		A_bl->ShrinkNumRows(A->GetNumRows() - (i + r));
-		L_bl->ShrinkNumRows(A->GetNumRows() - (i + r));
-		L_bl_inter->ShrinkNumRows(A->GetNumRows() - (i + r));
-		A_br->ShrinkNumRows(A->GetNumRows() - (i + r));
-		A_br->ShrinkNumCols(A->GetNumCols() - (i + r));
-		A_br_inter->ShrinkNumRows(A->GetNumRows() - (i + r));
-		A_br_inter->ShrinkNumCols(A->GetNumCols() - (i + r));
-			
-		matrix_sliceblock(A, U_tl, i, i);
-		matrix_sliceblock(A, A_bl, i + r, i);
-		matrix_sliceblock(A, A_tr, i, i + r);
+    L_bl->ShrinkNumRows(A->GetNumRows() - (i + r));
+		A_tr->ShrinkNumCols(A->GetNumCols() - (i + r));
+
+    L_loop->ToIdentity();
+
+//    std::cout << "\nA_loop on i = " << i << std::endl;
+//    matrix_print(A_loop);
+//    std::cout << "\nA_copy" << std::endl;
+//    matrix_print(A_copy);
 
 		for (int j = 0; j < r; ++j)
 		{
-			matrix_slicecolumn(U_tl, column_slice, j); // O(1)
+			matrix_slicecolumn(A_loop, column_slice, j); // O(1)
 			int idx;
-			double max = reduce_absmaxidx(&column_slice[i], r - j, &idx); // O(log(rows - i)) <= O(log(rows))
+			double max = reduce_absmaxidx(&column_slice[j], (A_loop->GetNumRows() - j), &idx); // O(log(rows - i)) <= O(log(rows))
 			idx = idx + j;
 
 			if (j != idx)
 			{
-				matrix_rowswap(P_tl, j, idx); // O(1)
-				matrix_rowswap(U_tl, j, idx);
-				matrix_subdiagonal_rowswap(L_tl, j, idx);
+        matrix_rowswap(A_loop, j, idx);
+        matrix_rowswap(A_copy, i + j, idx + i);
+				matrix_rowswap(P, j + i, idx + i); // O(1)
+				matrix_subdiagonal_rowswap(L_loop, j, idx);
+        matrix_subdiagonal_rowswap(L, i + j, idx + i);
 			}
-    	matrix_getelementarymatrix(U_tl, L_tl_inter, j);
-    	matrix_multiply(U_tl_inter, U_tl, U_tl_inter);
-    	matrix_copy(U_tl, U_tl_inter);
+    	matrix_getelementarymatrix(A_loop, E_loop, j);
+    	matrix_multiply(E_loop, A_loop, A_loop_inter);
+    	matrix_copy(A_loop, A_loop_inter);
     
-			matrix_invertelementarymatrix(L_tl_inter, P_tl_inter, j);
-    	matrix_subdiagonal_writecolumn(L_tl, P_tl_inter, j);
+			matrix_invertelementarymatrix(E_loop, E_loop_invert, j);
+    	matrix_subdiagonal_writecolumn(L_loop, E_loop_invert, j);
 		}
 
-		matrix_copy(L_tl_inter, L_tl);
-		matrix_copy(U_tl_inter, U_tl);
-		GJE_inverse(U_tl_inter);
-		GJE_inverse(L_tl_inter);
-		matrix_multiply(A_bl, U_tl_inter, L_bl);
-		matrix_multiply(L_tl_inter, A_tr, U_tr);
-		
-		matrix_multiply(L_bl, U_tr, A_br_inter);
-		matrix_subtract(A_br, A_br_inter, A_br);
+    matrix_sliceblock(L_loop, L_tl, BlockLoc::UPPERLEFT);
+    if (L_bl->GetNumRows() > 0)
+    {
+      matrix_sliceblock(L_loop, L_bl, BlockLoc::BOTTOMLEFT);
+    }
+    //matrix_sliceblock(A_loop, U_tr, BlockLoc::UPPERRIGHT);
+    matrix_sliceblock(A_loop, U_tl, BlockLoc::UPPERLEFT);
+//    std::cout << "\nA_copy" << std::endl;
+//    matrix_print(A_copy);
+//    std::cout << "\nA_tr" << std::endl;
+//    matrix_print(A_tr);
+    //matrix_writeblock(A_copy, A_loop, BlockLoc::BOTTOMRIGHT);
+//		matrix_writeblock(P, P_loop, BlockLoc::BOTTOMRIGHT);
 
-		matrix_writeblock(A, A_br, BlockLoc::BOTTOMRIGHT);
-		matrix_writeblock(P, P_tl, i, i);
+		A_loop->ShrinkNumRows(A->GetNumRows() - (i + r));
+		A_loop->ShrinkNumCols(A->GetNumCols() - (i + r));
+		L_loop->ShrinkNumRows(A->GetNumRows() - (i + r));
+		L_loop->ShrinkNumCols(A->GetNumCols() - (i + r));
+		E_loop->ShrinkNumRows(A->GetNumRows() - (i + r));
+		E_loop->ShrinkNumCols(A->GetNumCols() - (i + r));
+//		P_loop->ShrinkNumRows(A->GetNumRows() - (i + r));
+//		P_loop->ShrinkNumCols(A->GetNumCols() - (i + r));
+		A_loop_inter->ShrinkNumRows(A->GetNumRows() - (i + r));
+		A_loop_inter->ShrinkNumCols(A->GetNumCols() - (i + r));
+		E_loop_invert->ShrinkNumRows(A->GetNumRows() - (i + r));
+		E_loop_invert->ShrinkNumCols(A->GetNumCols() - (i + r));
+		
+//    matrix_sliceblock(P, P_loop, BlockLoc::BOTTOMRIGHT);
 		matrix_writeblock(U, U_tl, i, i);
+    std::cout << "\nBefore L_tl update L_tl:" << std::endl;
+    matrix_print(L_tl);
+    std::cout << "\nBefore L_tl update Curr L:" << std::endl;
+    matrix_print(L);
 		matrix_writeblock(L, L_tl, i, i);
-		matrix_writeblock(U, U_tr, i, r + i);
-		matrix_writeblock(L, L_bl, r + i, i);
+    std::cout << "\nAfter L_tl update Curr L:" << std::endl;
+    matrix_print(L);
+    
+    if (A_tr->GetNumCols() > 0)
+    {
+      matrix_sliceblock(A_copy, A_loop, BlockLoc::BOTTOMRIGHT);
+		  matrix_sliceblock(A_copy, A_tr, i, i + r);
+      GJE_inverse(L_tl);
+//      std::cout << "\ninverse of L_tl" << std::endl;
+//      matrix_print(L_tl);
+//      std::cout << "\nA_tr" << std::endl;
+//      matrix_print(A_tr);
+      matrix_multiply(L_tl, A_tr, U_tr);
+     
+//      std::cout << "\nobtained U_tr" << std::endl;
+//      matrix_print(U_tr);
+//      std::cout << "\nL_bl" << std::endl;
+//      matrix_print(L_bl);
+      matrix_multiply(L_bl, U_tr, A_loop_inter);
+      matrix_subtract(A_loop, A_loop_inter, A_loop);
+//      std::cout << "\nnew A_loop" << std::endl;
+//      matrix_print(A_loop);
+//      std::cout << "\nBefore write A_copy" << std::endl;
+//      matrix_print(A_copy);
+      matrix_writeblock(A_copy, A_loop, BlockLoc::BOTTOMRIGHT);
+//      std::cout << "\nAfter A_copy" << std::endl;
+//      matrix_print(A_copy);
+      matrix_writeblock(U, U_tr, i, r + i);
+      matrix_writeblock(L, L_bl, r + i, i);
+    }
+    
+    std::cout << "\nCurr U:" << std::endl;
+    matrix_print(U);
+
+    std::cout << "\nCurr P:" << std::endl;
+    matrix_print(P);
+
+    std::cout << "\nCurr L:" << std::endl;
+    matrix_print(L);
   }
 	
 	delete U_tl;
-	delete U_tl_inter;	
 	delete L_tl;
-	delete L_tl_inter;	
-	delete P_tl;
-	delete P_tl_inter;	
 	delete A_tr;
 	delete U_tr;
-	delete U_tr_inter;
-	delete A_bl;
 	delete L_bl;
-	delete L_bl_inter;
-	delete A_br;
-	delete A_br_inter;
+  delete A_copy;
+//	delete P_loop;
+	delete A_loop;
+	delete A_loop_inter;
+	delete L_loop;
+	delete E_loop;
+	delete E_loop_invert;
+  delete A_copy;
   cudaFree(column_slice);
 }

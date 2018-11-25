@@ -27,6 +27,10 @@ int lu_decomposition_run(int argc, Matrix **argv);
 
 int lu_decomposition_verify(int argc, Matrix **argv);
 
+int lu_blockeddecomposition_run(int argc, Matrix **argv);
+
+int lu_blockeddecomposition_verify(int argc, Matrix **argv);
+
 int steepest_descent_run(int argc, Matrix **argv);
 
 int conjugate_direction_run(int argc, Matrix **argv);

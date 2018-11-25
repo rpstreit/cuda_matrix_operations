@@ -60,11 +60,80 @@ int matmul_verify(int argc, Matrix **argv)
   matrix_multiply(A, B, result_gpu);
 
   cudaDeviceSynchronize();
-  int result = matrix_equals(result_cpu, result_gpu, ERROR) ? 0 : 1;
-
+  int result = matrix_equals(result_cpu, result_gpu, ERROR) ? 0 : 1; 
   cudaDeviceSynchronize();
   delete result_cpu;
   delete result_gpu;
+
+  return result;
+}
+
+int lu_blockeddecomposition_run(int argc, Matrix **argv)
+{
+  if (argc != 1)
+  {
+    std::cerr << "error: lu decomposition requires 1 argument" << std::endl;
+  }
+
+  Matrix *A = argv[0];
+  Matrix *P = new Matrix(A->GetNumCols(), A->GetNumCols());
+  Matrix *L = new Matrix(A->GetNumCols(), A->GetNumCols());
+  Matrix *U = new Matrix(A->GetNumRows(), A->GetNumCols());
+  Matrix *left = new Matrix(A->GetNumRows(), A->GetNumCols());
+  Matrix *right = new Matrix(A->GetNumRows(), A->GetNumCols());
+
+  int r = (int)std::sqrt((double)A->GetNumCols());
+
+  lu_blockeddecomposition(A, L, U, P, r);
+
+  std::cout << "\nP =" << std::endl;
+  matrix_print(P);
+  std::cout << "\nL =" << std::endl;
+  matrix_print(L);
+  std::cout << "\nU =" << std::endl;
+  matrix_print(U);
+
+  delete P;
+  delete L;
+  delete U;
+  delete left;
+  delete right;
+
+  return 0;
+}
+
+int lu_blockeddecomposition_verify(int argc, Matrix **argv)
+{
+  if (argc != 1)
+  {
+    std::cerr << "error: lu decomposition requires 1 argument" << std::endl;
+  }
+
+  Matrix *A = argv[0];
+  Matrix *P = new Matrix(A->GetNumCols(), A->GetNumCols());
+  Matrix *L = new Matrix(A->GetNumCols(), A->GetNumCols());
+  Matrix *U = new Matrix(A->GetNumRows(), A->GetNumCols());
+  Matrix *left = new Matrix(A->GetNumRows(), A->GetNumCols());
+  Matrix *right = new Matrix(A->GetNumRows(), A->GetNumCols());
+
+  int r = (int)std::sqrt((double)A->GetNumCols());
+
+  lu_blockeddecomposition(A, L, U, P, r);
+
+  matrix_multiply_cpu(P, A, left);
+  matrix_multiply_cpu(L, U, right);
+
+  std::cout << "\nPA = " << std::endl;
+  matrix_print(left);
+  std::cout << "\nLU = " << std::endl;
+  matrix_print(right);
+  int result = matrix_equals(left, right, ERROR) ? 0 : 1;
+
+  delete P;
+  delete L;
+  delete U;
+  delete left;
+  delete right;
 
   return result;
 }
@@ -84,8 +153,7 @@ int lu_decomposition_run(int argc, Matrix **argv)
   Matrix *right = new Matrix(A->GetNumRows(), A->GetNumCols());
 
   lu_decomposition(A, L, U, P);
-
-  std::cout << "\nP =" << std::endl;
+std::cout << "\nP =" << std::endl;
   matrix_print(P);
   std::cout << "\nL =" << std::endl;
   matrix_print(L);
