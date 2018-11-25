@@ -75,6 +75,7 @@ void matrix_invertelementarymatrix(Matrix *A, Matrix *result, int col);
 
 bool matrix_equals(Matrix *A, Matrix *B, double error);
 
+void matrix_floor_small(Matrix* output, Matrix *input);
 
 double dot_product(Matrix *vec1, Matrix *vec2);
 

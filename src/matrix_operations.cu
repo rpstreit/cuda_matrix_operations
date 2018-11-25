@@ -23,6 +23,7 @@ __global__ void kmatrix_subdiagonal_rowswap(Matrix *A, int row1, int row2);
 __global__ void kmatrix_subtract(Matrix *A, Matrix *B, Matrix *C);
 __global__ void kmatrix_add(Matrix *A, Matrix *B, Matrix *C);
 __global__ void kmultiply_scalar(Matrix *output, Matrix *input, double scale);
+__global__ void kfloor(Matrix *output, Matrix *input);
 __global__ void kmatrix_subdiagonal_writecolumn(Matrix *dest, Matrix *src, int col);
 
 void matrix_subdiagonal_writecolumn(Matrix *dest, Matrix *src, int col)
@@ -327,6 +328,26 @@ void matrix_multiply_scalar(Matrix *output, Matrix *input, double scale) {
   // std::cout << "blocks are:" << num_blocks << std::endl;
   kmultiply_scalar<<<num_blocks, THREADS_PER_BLOCK>>>(output, input, scale);
   cudaDeviceSynchronize();
+}
+
+void matrix_floor_small(Matrix* output, Matrix *input) {
+  int num_blocks = (input->GetNumRows() * input->GetNumCols() + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+  // std::cout << "blocks are:" << num_blocks << std::endl;
+  kfloor<<<num_blocks, THREADS_PER_BLOCK>>>(output, input);
+  cudaDeviceSynchronize();
+}
+
+__global__ void kfloor(Matrix *output, Matrix *input) {
+  int idx = threadIdx.x + blockIdx.x * blockDim.x;
+  double * outputM = output->GetFlattened();
+  double * inputM = input->GetFlattened();
+  if(idx < (input->GetNumCols() * input->GetNumRows())) 
+  {
+    if(inputM[idx] < 0.00001)
+      outputM[idx] = 0;
+    else
+      outputM[idx] = inputM[idx];
+  }
 }
 
 __global__ void kmultiply_scalar(Matrix *output, Matrix *input, double scale)

@@ -316,14 +316,22 @@ int inverse_verify(int argc, Matrix **argv)
     std::cerr << "error: GJE_inverse_run requires 1 argument" << std::endl;
   }
   Matrix * A_operator = argv[0];
+  std::cout << "A_operator" << std::endl;
   matrix_print(A_operator);
+  std::cout << std::endl;
   Matrix *inverse = new Matrix(*A_operator);
   Matrix * output = GJE_inverse(inverse);
+  std::cout << "Inverse matrix: " << std::endl;
   matrix_print(output);
+  std::cout << std::endl;
 
   Matrix* check = new Matrix(A_operator->GetNumRows(), A_operator->GetNumCols());
 
   matrix_multiply(A_operator, output, check);
+  matrix_floor_small(check, check);
+  std::cout << "Check" << std::endl;
+  matrix_print(check);
+  std::cout << std::endl;
   A_operator->ToIdentity();
 
   if (matrix_equals(check, A_operator, 0.01)){
