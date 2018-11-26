@@ -1,0 +1,5 @@
+
+f=$1
+t=$2
+r=`{ time $f $t > /dev/null; } 2>&1 | grep real | grep -Eo '[0-9.]{5,6}'`
+awk "BEGIN{print $r}"
