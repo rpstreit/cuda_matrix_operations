@@ -49,7 +49,7 @@ double determinant_recur(Matrix *A)
 
 			// calculate determinant from (N - 1)-size minor matrix
 			double inter_value = determinant_recur(minor_inter);
-			printf("inter_value %f\n", inter_value);	
+			//printf("inter_value %f\n", inter_value);	
 			result += pow(-1, 1 + j1 + 1) * (*A)[0][j1] * inter_value;
 
 			// free all minor matrices here after recursive call is returning from base case
@@ -63,6 +63,69 @@ double determinant_recur(Matrix *A)
 	return ceil(result);
 }
 
+__global__ void kmatrix_getrowindex(Matrix *input, int *index, int row)
+{
+	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	double * inputM = input->GetFlattened();
+	if (idx < input->GetNumCols()) // only getting first row
+	{
+		if (inputM[idx + row*input->GetNumCols()] == 1)
+		{
+			*index = idx;
+		}
+
+		//if ((*input)[row][idx] == 1)
+		//{
+		//	*index = idx;
+		//}		
+	}	
+}
+
+double matrix_getpermutationdeterminant(Matrix *input)
+{
+	int num_rowswaps = 0;	
+	int *index;
+	cudaMalloc((void **) &index, sizeof(int));
+
+	matrix_print(input);
+	double * inputM = input->GetFlattened();
+	
+	for (int i = 0; i < input->GetNumCols() * input->GetNumRows(); i++)
+	{
+		printf("%f, ", inputM[i]);
+	}
+	printf("\n");
+
+	int num_blocks = (input->GetNumCols() + THREADS_PER_BLOCK + 1) / THREADS_PER_BLOCK;
+
+	int row_index = 0;
+	while (row_index < input->GetNumRows())	
+	{
+		// find index of 1 for this row
+		kmatrix_getrowindex<<<num_blocks, THREADS_PER_BLOCK>>>(input, index, row_index);
+		cudaDeviceSynchronize();		
+
+		int index_out;
+		cudaMemcpy(&index_out, index, sizeof(int), cudaMemcpyDeviceToHost);
+		printf("index: %d row %d\n", index_out, row_index);
+
+		// if current row is not correct, swap into correct location	
+		if (index_out != row_index)
+		{
+			matrix_rowswap(input, index_out, row_index); 	
+			num_rowswaps += 1;
+		}
+		else
+		{
+			row_index += 1; // if correct, no need to swap this row again
+		}
+	}	
+
+	cudaFree(index);
+
+	return num_rowswaps;
+}
+
 double determinant_lu(Matrix *A)
 {
 	Matrix *P = new Matrix(A->GetNumCols(), A->GetNumCols());
@@ -73,17 +136,24 @@ double determinant_lu(Matrix *A)
 
 	//Matrix *P_inv = GJE_inverse(P);
 
-	int P_inv_det = determinant_recur(P);
+	// calculate determinant of permutation matrix
+	int P_det = determinant_recur(P);
   	int L_det = determinant_recur(L);
 	int U_det = determinant_recur(U);
 
-  	printf("P_inv_det %d, L_det %d, U_det %d\n", P_inv_det, L_det, U_det);
+	int P_det2 = matrix_getpermutationdeterminant(P);
+	P_det2 = pow(-1, P_det);
+	printf("%d\n", P_det2);	
+
+	int L_det2 = 
+
+  	printf("P_det %d, L_det %d, U_det %d\n", P_det, L_det, U_det);
 
 	delete P;
 	delete L;
 	delete U;
 
-	return P_inv_det * L_det * U_det;		
+	return P_det * L_det * U_det;		
 }
 
 // int determinant_iter(Matrix *A)
