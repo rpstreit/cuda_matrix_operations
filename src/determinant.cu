@@ -53,7 +53,7 @@ double determinant_recur(Matrix *A)
 			result += pow(-1, 1 + j1 + 1) * (*A)[0][j1] * inter_value;
 
 			// free all minor matrices here after recursive call is returning from base case
-			//delete minor_intermediate;
+			delete minor_inter;
 		}
 
 		// // need to wait for all minor matrices

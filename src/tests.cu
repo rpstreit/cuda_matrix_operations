@@ -272,7 +272,7 @@ int determinant_recur_run(int argc, Matrix **argv)
   int determinant = determinant_recur(A_operator);
   std::cout << "determinant: " << determinant << std::endl;
 
-  delete A_operator;
+  //delete A_operator;
   return 0;
 }
 
@@ -288,7 +288,7 @@ int determinant_lu_run(int argc, Matrix **argv)
   int determinant = determinant_lu(A_operator);
   std::cout << "determinant: " << determinant << std::endl;
 
-  delete A_operator;
+  //delete A_operator;
   return 0;
 }
 
