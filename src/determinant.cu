@@ -126,6 +126,19 @@ double matrix_getpermutationdeterminant(Matrix *input)
 	return num_rowswaps;
 }
 
+double matrix_diagonalproduct(Matrix *input)
+{
+	double product = 1;
+	double * inputM = input->GetFlattened();
+
+	for (int i = 0; i < input->GetNumCols(); i++)
+	{
+		product *= inputM[i + i*input->GetNumCols()];
+	}
+
+	return product;
+}
+
 double determinant_lu(Matrix *A)
 {
 	Matrix *P = new Matrix(A->GetNumCols(), A->GetNumCols());
@@ -134,18 +147,10 @@ double determinant_lu(Matrix *A)
 
 	lu_decomposition(A, L, U, P);
 
-	//Matrix *P_inv = GJE_inverse(P);
-
-	// calculate determinant of permutation matrix
-	int P_det = determinant_recur(P);
-  	int L_det = determinant_recur(L);
-	int U_det = determinant_recur(U);
-
-	int P_det2 = matrix_getpermutationdeterminant(P);
-	P_det2 = pow(-1, P_det);
-	printf("%d\n", P_det2);	
-
-	int L_det2 = 
+	int P_det = matrix_getpermutationdeterminant(P);
+	P_det = pow(-1, P_det);
+	double L_det = matrix_diagonalproduct(L);
+	double U_det = matrix_diagonalproduct(U);
 
   	printf("P_det %d, L_det %d, U_det %d\n", P_det, L_det, U_det);
 
