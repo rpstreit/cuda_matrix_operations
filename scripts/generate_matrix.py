@@ -1,5 +1,22 @@
-import numpy as np
+#!/usr/bin/env python
+
+""" 
+
+generate_matrix.py
+
+Generates a random matrices for testing the cuda linear algebra operations project. For use
+please run the module with --help
+
+"""
+
+__author__ = "Bobby Streit"
+__version__ = "1.0"
+__maintainer__ = "Bobby Streit"
+__email__ = "rpstreit@utexas.edu"
+__status__ = "Minimum Viable Product"
+
 import argparse
+import numpy as np
 import random
 
 PARSER =  argparse.ArgumentParser()

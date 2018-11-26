@@ -22,6 +22,7 @@ void lu_decomposition(Matrix *A, Matrix *L, Matrix *U, Matrix *P)
       || P->GetNumRows() != P->GetNumCols())
   {
     std::cerr << "lu_decomposition: matrix dimensions of inputs are mismatched" << std::endl;
+    exit(EXIT_FAILURE);
   }
   double *column_slice;
   P->ToIdentity();
@@ -39,14 +40,14 @@ void lu_decomposition(Matrix *A, Matrix *L, Matrix *U, Matrix *P)
   for (int i = 0; i < cols - 1; i++)
   {
     matrix_slicecolumn(U, column_slice, i); // O(1)
-//    double slice[rows];
-//    cudaMemcpy(slice, column_slice, rows * sizeof(double), cudaMemcpyDeviceToHost);
-//    std::cout << "col " << i << " slice:\n{";
-//    for (int j = 0; j < rows; ++j)
-//    {
-//      std::cout << " " << slice[j];
-//    }
-//    std::cout << " }" << std::endl;
+    double slice[rows];
+    cudaMemcpy(slice, column_slice, rows * sizeof(double), cudaMemcpyDeviceToHost);
+    std::cout << "col " << i << " slice:\n{";
+    for (int j = 0; j < rows; ++j)
+    {
+      std::cout << " " << slice[j];
+    }
+    std::cout << " }" << std::endl;
     int idx;
     double max = reduce_absmaxidx(&column_slice[i], rows - i, &idx); // O(log(rows - i)) <= O(log(rows))
     idx = idx + i;
@@ -129,9 +130,9 @@ void lu_blockeddecomposition(Matrix *A, Matrix *L, Matrix *U, Matrix *P, int r)
 	Matrix *L_bl = new Matrix(A->GetNumRows() - r, r);
 	Matrix *A_loop = new Matrix(A->GetNumRows(), A->GetNumCols());
 	Matrix *A_loop_inter = new Matrix(A->GetNumRows(), A->GetNumCols());
-	Matrix *L_loop = new Matrix(A->GetNumRows(), A->GetNumCols());
-	Matrix *E_loop = new Matrix(A->GetNumRows(), A->GetNumCols());
-	Matrix *E_loop_invert = new Matrix(A->GetNumRows(), A->GetNumCols());
+	Matrix *L_loop = new Matrix(A->GetNumRows(), A->GetNumRows());
+	Matrix *E_loop = new Matrix(A->GetNumRows(), A->GetNumRows());
+	Matrix *E_loop_invert = new Matrix(A->GetNumRows(), A->GetNumRows());
 //	Matrix *P_loop = new Matrix(A->GetNumRows(), A->GetNumCols());
   Matrix *A_copy = new Matrix(A->GetNumRows(), A->GetNumCols());
   double *column_slice;
@@ -142,6 +143,7 @@ void lu_blockeddecomposition(Matrix *A, Matrix *L, Matrix *U, Matrix *P, int r)
 
 //  P_loop->ToIdentity();
 
+//  std::cout << "\nBeginning i loop" << std::endl;
   int o_r = r;
   for (int i = 0; i < A->GetNumCols(); i += o_r)
   {
@@ -181,6 +183,11 @@ void lu_blockeddecomposition(Matrix *A, Matrix *L, Matrix *U, Matrix *P, int r)
         matrix_subdiagonal_rowswap(L, i + j, idx + i);
 			}
     	matrix_getelementarymatrix(A_loop, E_loop, j);
+      std::cout << "\nAt first multiply" << std::endl;
+      std::cout << "\nE_loop" << std::endl;
+      matrix_print(E_loop);
+      std::cout << "\nA_loop" << std::endl;
+      matrix_print(A_loop); 
     	matrix_multiply(E_loop, A_loop, A_loop_inter);
     	matrix_copy(A_loop, A_loop_inter);
     
@@ -192,6 +199,7 @@ void lu_blockeddecomposition(Matrix *A, Matrix *L, Matrix *U, Matrix *P, int r)
     if (L_bl->GetNumRows() > 0)
     {
       matrix_sliceblock(L_loop, L_bl, BlockLoc::BOTTOMLEFT);
+      matrix_writeblock(L, L_bl, r + i, i);
     }
     //matrix_sliceblock(A_loop, U_tr, BlockLoc::UPPERRIGHT);
     matrix_sliceblock(A_loop, U_tl, BlockLoc::UPPERLEFT);
@@ -205,15 +213,15 @@ void lu_blockeddecomposition(Matrix *A, Matrix *L, Matrix *U, Matrix *P, int r)
 		A_loop->ShrinkNumRows(A->GetNumRows() - (i + r));
 		A_loop->ShrinkNumCols(A->GetNumCols() - (i + r));
 		L_loop->ShrinkNumRows(A->GetNumRows() - (i + r));
-		L_loop->ShrinkNumCols(A->GetNumCols() - (i + r));
+		L_loop->ShrinkNumCols(A->GetNumRows() - (i + r));
 		E_loop->ShrinkNumRows(A->GetNumRows() - (i + r));
-		E_loop->ShrinkNumCols(A->GetNumCols() - (i + r));
+		E_loop->ShrinkNumCols(A->GetNumRows() - (i + r));
 //		P_loop->ShrinkNumRows(A->GetNumRows() - (i + r));
 //		P_loop->ShrinkNumCols(A->GetNumCols() - (i + r));
 		A_loop_inter->ShrinkNumRows(A->GetNumRows() - (i + r));
 		A_loop_inter->ShrinkNumCols(A->GetNumCols() - (i + r));
 		E_loop_invert->ShrinkNumRows(A->GetNumRows() - (i + r));
-		E_loop_invert->ShrinkNumCols(A->GetNumCols() - (i + r));
+		E_loop_invert->ShrinkNumCols(A->GetNumRows() - (i + r));
 		
 //    matrix_sliceblock(P, P_loop, BlockLoc::BOTTOMRIGHT);
 		matrix_writeblock(U, U_tl, i, i);
@@ -250,7 +258,6 @@ void lu_blockeddecomposition(Matrix *A, Matrix *L, Matrix *U, Matrix *P, int r)
 //      std::cout << "\nAfter A_copy" << std::endl;
 //      matrix_print(A_copy);
       matrix_writeblock(U, U_tr, i, r + i);
-      matrix_writeblock(L, L_bl, r + i, i);
     }
     
     std::cout << "\nCurr U:" << std::endl;

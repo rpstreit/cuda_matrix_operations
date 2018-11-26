@@ -275,10 +275,8 @@ bool matrix_equals(Matrix *A, Matrix *B, double error)
     return false;
   }
 
-  cudaDeviceSynchronize();
   for (i = 0; i < A->GetNumRows(); ++i)
   {
-    cudaDeviceSynchronize();
     for (j = 0; j < A->GetNumCols(); ++j)
     {
       int diff = (*A)[i][j] - (*B)[i][j];
@@ -288,7 +286,6 @@ bool matrix_equals(Matrix *A, Matrix *B, double error)
         return false;
       }
     }
-    cudaDeviceSynchronize();
   }
 
   return true;

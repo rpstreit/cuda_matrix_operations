@@ -76,8 +76,8 @@ int lu_blockeddecomposition_run(int argc, Matrix **argv)
   }
 
   Matrix *A = argv[0];
-  Matrix *P = new Matrix(A->GetNumCols(), A->GetNumCols());
-  Matrix *L = new Matrix(A->GetNumCols(), A->GetNumCols());
+  Matrix *P = new Matrix(A->GetNumRows(), A->GetNumRows());
+  Matrix *L = new Matrix(A->GetNumRows(), A->GetNumRows());
   Matrix *U = new Matrix(A->GetNumRows(), A->GetNumCols());
   Matrix *left = new Matrix(A->GetNumRows(), A->GetNumCols());
   Matrix *right = new Matrix(A->GetNumRows(), A->GetNumCols());
@@ -110,8 +110,8 @@ int lu_blockeddecomposition_verify(int argc, Matrix **argv)
   }
 
   Matrix *A = argv[0];
-  Matrix *P = new Matrix(A->GetNumCols(), A->GetNumCols());
-  Matrix *L = new Matrix(A->GetNumCols(), A->GetNumCols());
+  Matrix *P = new Matrix(A->GetNumRows(), A->GetNumRows());
+  Matrix *L = new Matrix(A->GetNumRows(), A->GetNumRows());
   Matrix *U = new Matrix(A->GetNumRows(), A->GetNumCols());
   Matrix *left = new Matrix(A->GetNumRows(), A->GetNumCols());
   Matrix *right = new Matrix(A->GetNumRows(), A->GetNumCols());
@@ -146,8 +146,8 @@ int lu_decomposition_run(int argc, Matrix **argv)
   }
 
   Matrix *A = argv[0];
-  Matrix *P = new Matrix(A->GetNumCols(), A->GetNumCols());
-  Matrix *L = new Matrix(A->GetNumCols(), A->GetNumCols());
+  Matrix *P = new Matrix(A->GetNumRows(), A->GetNumRows());
+  Matrix *L = new Matrix(A->GetNumRows(), A->GetNumRows());
   Matrix *U = new Matrix(A->GetNumRows(), A->GetNumCols());
   Matrix *left = new Matrix(A->GetNumRows(), A->GetNumCols());
   Matrix *right = new Matrix(A->GetNumRows(), A->GetNumCols());
@@ -177,8 +177,8 @@ int lu_decomposition_verify(int argc, Matrix **argv)
   }
 
   Matrix *A = argv[0];
-  Matrix *P = new Matrix(A->GetNumCols(), A->GetNumCols());
-  Matrix *L = new Matrix(A->GetNumCols(), A->GetNumCols());
+  Matrix *P = new Matrix(A->GetNumRows(), A->GetNumRows());
+  Matrix *L = new Matrix(A->GetNumRows(), A->GetNumRows());
   Matrix *U = new Matrix(A->GetNumRows(), A->GetNumCols());
   Matrix *left = new Matrix(A->GetNumRows(), A->GetNumCols());
   Matrix *right = new Matrix(A->GetNumRows(), A->GetNumCols());
