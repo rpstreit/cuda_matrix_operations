@@ -73,11 +73,6 @@ __global__ void kmatrix_getrowindex(Matrix *input, int *index, int row)
 		{
 			*index = idx;
 		}
-
-		//if ((*input)[row][idx] == 1)
-		//{
-		//	*index = idx;
-		//}		
 	}	
 }
 
@@ -152,7 +147,7 @@ double determinant_lu(Matrix *A)
 	double L_det = matrix_diagonalproduct(L);
 	double U_det = matrix_diagonalproduct(U);
 
-  	printf("P_det %d, L_det %d, U_det %d\n", P_det, L_det, U_det);
+  	printf("P_det %d, L_det %f, U_det %f\n", P_det, L_det, U_det);
 
 	delete P;
 	delete L;

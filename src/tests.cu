@@ -269,8 +269,20 @@ int determinant_recur_run(int argc, Matrix **argv)
   Matrix * A_operator = argv[0];
   matrix_print(A_operator);
 
+  cudaEvent_t start, stop;
+  cudaEventCreate(&start);
+  cudaEventCreate(&stop);
+  cudaEventRecord(start);
+
   int determinant = determinant_recur(A_operator);
   std::cout << "determinant: " << determinant << std::endl;
+
+  cudaEventRecord(stop);
+  cudaEventSynchronize(stop);
+  float elapsed_time;
+  cudaEventElapsedTime(&elapsed_time, start, stop);
+
+  std::cout << "determinant_recur took : " << elapsed_time << " ms" << std::endl;
 
   //delete A_operator;
   return 0;
@@ -285,8 +297,20 @@ int determinant_lu_run(int argc, Matrix **argv)
   Matrix * A_operator = argv[0];
   matrix_print(A_operator);
 
+  cudaEvent_t start, stop;
+  cudaEventCreate(&start);
+  cudaEventCreate(&stop);
+  cudaEventRecord(start);
+
   int determinant = determinant_lu(A_operator);
   std::cout << "determinant: " << determinant << std::endl;
+
+  cudaEventRecord(stop);
+  cudaEventSynchronize(stop);
+  float elapsed_time;
+  cudaEventElapsedTime(&elapsed_time, start, stop);
+
+  std::cout << "determinant_recur took : " << elapsed_time << " ms" << std::endl;
 
   //delete A_operator;
   return 0;
@@ -352,7 +376,6 @@ int determinant_verify(int argc, Matrix **argv)
 
   int recur_ans = determinant_recur(A_operator);
   int lu_ans = determinant_recur(A_operator);  
-
 
   std::cout << "recursive: " << recur_ans << " lu: " << lu_ans << std::endl; 
   if (recur_ans == lu_ans)
