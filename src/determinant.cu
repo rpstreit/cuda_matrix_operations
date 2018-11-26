@@ -82,14 +82,14 @@ double matrix_getpermutationdeterminant(Matrix *input)
 	int *index;
 	cudaMalloc((void **) &index, sizeof(int));
 
-	matrix_print(input);
-	double * inputM = input->GetFlattened();
-	
-	for (int i = 0; i < input->GetNumCols() * input->GetNumRows(); i++)
-	{
-		printf("%f, ", inputM[i]);
-	}
-	printf("\n");
+	//matrix_print(input);
+	//double * inputM = input->GetFlattened();
+	//
+	//for (int i = 0; i < input->GetNumCols() * input->GetNumRows(); i++)
+	//{
+	//	printf("%f, ", inputM[i]);
+	//}
+	//printf("\n");
 
 	int num_blocks = (input->GetNumCols() + THREADS_PER_BLOCK + 1) / THREADS_PER_BLOCK;
 
@@ -102,7 +102,7 @@ double matrix_getpermutationdeterminant(Matrix *input)
 
 		int index_out;
 		cudaMemcpy(&index_out, index, sizeof(int), cudaMemcpyDeviceToHost);
-		printf("index: %d row %d\n", index_out, row_index);
+		//printf("index: %d row %d\n", index_out, row_index);
 
 		// if current row is not correct, swap into correct location	
 		if (index_out != row_index)
@@ -147,13 +147,13 @@ double determinant_lu(Matrix *A)
 	double L_det = matrix_diagonalproduct(L);
 	double U_det = matrix_diagonalproduct(U);
 
-  	printf("P_det %d, L_det %f, U_det %f\n", P_det, L_det, U_det);
+  	//printf("P_det %d, L_det %f, U_det %f\n", P_det, L_det, U_det);
 
 	delete P;
 	delete L;
 	delete U;
 
-	return P_det * L_det * U_det;		
+	return P_det * L_det * ceil(U_det);		
 }
 
 // int determinant_iter(Matrix *A)
