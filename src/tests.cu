@@ -28,8 +28,21 @@ int matmul_run(int argc, Matrix **argv)
     exit(EXIT_FAILURE);
   }
   Matrix *result = new Matrix(A->GetNumRows(), B->GetNumCols());
-  
+ 
+  std::cout << "Running Matrix Multiply... ";
+
+  cudaEvent_t start, stop;
+  cudaEventCreate(&start);
+  cudaEventCreate(&stop);
+  cudaEventRecord(start);
+
   matrix_multiply(A, B, result);
+  
+  cudaEventRecord(stop);
+  cudaEventSynchronize(stop);
+  float elapsed_time;
+  cudaEventElapsedTime(&elapsed_time, start, stop);
+  std::cout << elapsed_time << "ms" << std::endl;
   std::cout << "\nAB = " << std::endl;
   matrix_print(result);
 
@@ -84,7 +97,20 @@ int lu_blockeddecomposition_run(int argc, Matrix **argv)
 
   int r = (int)std::sqrt((double)A->GetNumCols());
 
+  std::cout << "Running Blocked LU Decomposition... ";
+
+  cudaEvent_t start, stop;
+  cudaEventCreate(&start);
+  cudaEventCreate(&stop);
+  cudaEventRecord(start);
+
   lu_blockeddecomposition(A, L, U, P, r);
+  
+  cudaEventRecord(stop);
+  cudaEventSynchronize(stop);
+  float elapsed_time;
+  cudaEventElapsedTime(&elapsed_time, start, stop);
+  std::cout << elapsed_time << "ms" << std::endl;
 
   std::cout << "\nP =" << std::endl;
   matrix_print(P);
@@ -152,8 +178,22 @@ int lu_decomposition_run(int argc, Matrix **argv)
   Matrix *left = new Matrix(A->GetNumRows(), A->GetNumCols());
   Matrix *right = new Matrix(A->GetNumRows(), A->GetNumCols());
 
+  std::cout << "Running LU Decomposition... ";
+
+  cudaEvent_t start, stop;
+  cudaEventCreate(&start);
+  cudaEventCreate(&stop);
+  cudaEventRecord(start);
+
   lu_decomposition(A, L, U, P);
-std::cout << "\nP =" << std::endl;
+  
+  cudaEventRecord(stop);
+  cudaEventSynchronize(stop);
+  float elapsed_time;
+  cudaEventElapsedTime(&elapsed_time, start, stop);
+
+  std::cout << elapsed_time << "ms" << std::endl;
+  std::cout << "\nP =" << std::endl;
   matrix_print(P);
   std::cout << "\nL =" << std::endl;
   matrix_print(L);

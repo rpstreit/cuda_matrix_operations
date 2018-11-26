@@ -40,18 +40,18 @@ void lu_decomposition(Matrix *A, Matrix *L, Matrix *U, Matrix *P)
   for (int i = 0; i < cols - 1; i++)
   {
     matrix_slicecolumn(U, column_slice, i); // O(1)
-    double slice[rows];
-    cudaMemcpy(slice, column_slice, rows * sizeof(double), cudaMemcpyDeviceToHost);
-    std::cout << "col " << i << " slice:\n{";
-    for (int j = 0; j < rows; ++j)
-    {
-      std::cout << " " << slice[j];
-    }
-    std::cout << " }" << std::endl;
+//    double slice[rows];
+//    cudaMemcpy(slice, column_slice, rows * sizeof(double), cudaMemcpyDeviceToHost);
+//    std::cout << "col " << i << " slice:\n{";
+//    for (int j = 0; j < rows; ++j)
+//    {
+//      std::cout << " " << slice[j];
+//    }
+//    std::cout << " }" << std::endl;
     int idx;
     double max = reduce_absmaxidx(&column_slice[i], rows - i, &idx); // O(log(rows - i)) <= O(log(rows))
     idx = idx + i;
-    std::cout << "col " << i << ", max: " << max << "@row " << idx;
+//    std::cout << "col " << i << ", max: " << max << "@row " << idx;
 
     if (i != idx)
     {
@@ -64,26 +64,26 @@ void lu_decomposition(Matrix *A, Matrix *L, Matrix *U, Matrix *P)
     // just to save on copies
     // Update U
     matrix_getelementarymatrix(U, L_intermediate, i);
-    std::cout << "elementary matrix for col " << i << ": " << std::endl;
-    matrix_print(L_intermediate);
+//    std::cout << "elementary matrix for col " << i << ": " << std::endl;
+//    matrix_print(L_intermediate);
     matrix_multiply(L_intermediate, U, U_intermediate);
     matrix_copy(U, U_intermediate);
 
     // Update L
     matrix_invertelementarymatrix(L_intermediate, P_intermediate, i);
-    std::cout << "\ninverted elementary matrix:" << std::endl;
-    matrix_print(P_intermediate);
+//    std::cout << "\ninverted elementary matrix:" << std::endl;
+//    matrix_print(P_intermediate);
 
     matrix_subdiagonal_writecolumn(L, P_intermediate, i);
 
-    std::cout << "\nCurr U:" << std::endl;
-    matrix_print(U);
-
-    std::cout << "\nCurr P:" << std::endl;
-    matrix_print(P);
-
-    std::cout << "\nCurr L:" << std::endl;
-    matrix_print(L);
+//    std::cout << "\nCurr U:" << std::endl;
+//    matrix_print(U);
+//
+//    std::cout << "\nCurr P:" << std::endl;
+//    matrix_print(P);
+//
+//    std::cout << "\nCurr L:" << std::endl;
+//    matrix_print(L);
   }
   
   delete U_intermediate;
@@ -99,11 +99,11 @@ void lu_blockeddecomposition(Matrix *A, Matrix *L, Matrix *U, Matrix *P, int r)
   {
     r = A->GetNumCols();
   }
-  if (r < 2)
-  {
-    std::cerr << "lu_blockdecomposition: r width of submatrices must be greater than 1" << std::endl;
-    exit(EXIT_FAILURE);
-  }
+//  if (r < 2)
+//  {
+//    std::cerr << "lu_blockdecomposition: r width of submatrices must be greater than 1" << std::endl;
+//    exit(EXIT_FAILURE);
+//  }
   if (A->GetNumRows() < A->GetNumCols())
   {
     std::cerr << "lu_blockdecomposition: matrix dimensions on A are ill formed for LU Decomposition" << std::endl;
@@ -183,11 +183,11 @@ void lu_blockeddecomposition(Matrix *A, Matrix *L, Matrix *U, Matrix *P, int r)
         matrix_subdiagonal_rowswap(L, i + j, idx + i);
 			}
     	matrix_getelementarymatrix(A_loop, E_loop, j);
-      std::cout << "\nAt first multiply" << std::endl;
-      std::cout << "\nE_loop" << std::endl;
-      matrix_print(E_loop);
-      std::cout << "\nA_loop" << std::endl;
-      matrix_print(A_loop); 
+//      std::cout << "\nAt first multiply" << std::endl;
+//      std::cout << "\nE_loop" << std::endl;
+//      matrix_print(E_loop);
+//      std::cout << "\nA_loop" << std::endl;
+//      matrix_print(A_loop); 
     	matrix_multiply(E_loop, A_loop, A_loop_inter);
     	matrix_copy(A_loop, A_loop_inter);
     
@@ -225,13 +225,13 @@ void lu_blockeddecomposition(Matrix *A, Matrix *L, Matrix *U, Matrix *P, int r)
 		
 //    matrix_sliceblock(P, P_loop, BlockLoc::BOTTOMRIGHT);
 		matrix_writeblock(U, U_tl, i, i);
-    std::cout << "\nBefore L_tl update L_tl:" << std::endl;
-    matrix_print(L_tl);
-    std::cout << "\nBefore L_tl update Curr L:" << std::endl;
-    matrix_print(L);
+//    std::cout << "\nBefore L_tl update L_tl:" << std::endl;
+//    matrix_print(L_tl);
+//    std::cout << "\nBefore L_tl update Curr L:" << std::endl;
+//    matrix_print(L);
 		matrix_writeblock(L, L_tl, i, i);
-    std::cout << "\nAfter L_tl update Curr L:" << std::endl;
-    matrix_print(L);
+//    std::cout << "\nAfter L_tl update Curr L:" << std::endl;
+//    matrix_print(L);
     
     if (A_tr->GetNumCols() > 0)
     {
@@ -260,14 +260,14 @@ void lu_blockeddecomposition(Matrix *A, Matrix *L, Matrix *U, Matrix *P, int r)
       matrix_writeblock(U, U_tr, i, r + i);
     }
     
-    std::cout << "\nCurr U:" << std::endl;
-    matrix_print(U);
-
-    std::cout << "\nCurr P:" << std::endl;
-    matrix_print(P);
-
-    std::cout << "\nCurr L:" << std::endl;
-    matrix_print(L);
+//    std::cout << "\nCurr U:" << std::endl;
+//    matrix_print(U);
+//
+//    std::cout << "\nCurr P:" << std::endl;
+//    matrix_print(P);
+//
+//    std::cout << "\nCurr L:" << std::endl;
+//    matrix_print(L);
   }
 	
 	delete U_tl;
