@@ -164,6 +164,85 @@ int lu_blockeddecomposition_verify(int argc, Matrix **argv)
   return result;
 }
 
+int lu_columndecomposition_run(int argc, Matrix **argv)
+{
+  if (argc != 1)
+  {
+    std::cerr << "error: lu decomposition requires 1 argument" << std::endl;
+  }
+
+  Matrix *A = argv[0];
+  Matrix *Q = new Matrix(A->GetNumCols(), A->GetNumCols());
+  Matrix *L = new Matrix(A->GetNumRows(), A->GetNumRows());
+  Matrix *U = new Matrix(A->GetNumRows(), A->GetNumCols());
+  Matrix *left = new Matrix(A->GetNumRows(), A->GetNumCols());
+  Matrix *right = new Matrix(A->GetNumRows(), A->GetNumCols());
+
+  std::cout << "Running LU Decomposition with Column Pivoting... ";
+
+  cudaEvent_t start, stop;
+  cudaEventCreate(&start);
+  cudaEventCreate(&stop);
+  cudaEventRecord(start);
+
+  lu_columndecomposition(A, L, U, Q);
+  
+  cudaEventRecord(stop);
+  cudaEventSynchronize(stop);
+  float elapsed_time;
+  cudaEventElapsedTime(&elapsed_time, start, stop);
+
+  std::cout << elapsed_time << "ms" << std::endl;
+  std::cout << "\nQ =" << std::endl;
+  matrix_print(Q);
+  std::cout << "\nL =" << std::endl;
+  matrix_print(L);
+  std::cout << "\nU =" << std::endl;
+  matrix_print(U);
+
+  delete Q;
+  delete L;
+  delete U;
+  delete left;
+  delete right;
+
+  return 0;
+}
+
+int lu_columndecomposition_verify(int argc, Matrix **argv)
+{
+  if (argc != 1)
+  {
+    std::cerr << "error: lu decomposition requires 1 argument" << std::endl;
+  }
+
+  Matrix *A = argv[0];
+  Matrix *Q = new Matrix(A->GetNumCols(), A->GetNumCols());
+  Matrix *L = new Matrix(A->GetNumRows(), A->GetNumRows());
+  Matrix *U = new Matrix(A->GetNumRows(), A->GetNumCols());
+  Matrix *left = new Matrix(A->GetNumRows(), A->GetNumCols());
+  Matrix *right = new Matrix(A->GetNumRows(), A->GetNumCols());
+
+  lu_decomposition(A, L, U, Q);
+
+  matrix_multiply_cpu(Q, A, left);
+  matrix_multiply_cpu(L, U, right);
+
+  std::cout << "\nQA = " << std::endl;
+  matrix_print(left);
+  std::cout << "\nLU = " << std::endl;
+  matrix_print(right);
+  int result = matrix_equals(left, right, ERROR) ? 0 : 1;
+
+  delete Q;
+  delete L;
+  delete U;
+  delete left;
+  delete right;
+
+  return result;
+}
+
 int lu_decomposition_run(int argc, Matrix **argv)
 {
   if (argc != 1)

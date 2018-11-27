@@ -2,6 +2,8 @@
 
 #include <math.h>
 #include <iostream>
+#include <cstdlib>
+#include <curand_kernel.h>
 
 #include "matrix.h"
 #include "common.h"
@@ -19,17 +21,41 @@ __global__ void kmatrix_copy(Matrix *dest, Matrix *src);
 __global__ void kmatrix_getelementarymatrix(Matrix *A, Matrix *result, int col);
 __global__ void kmatrix_invertelementarymatrix(Matrix *A, Matrix *result, int col);
 __global__ void kmatrix_rowswap(Matrix *A, int row1, int row2);
+__global__ void kmatrix_colswap(Matrix *A, int col1, int col2);
 __global__ void kmatrix_subdiagonal_rowswap(Matrix *A, int row1, int row2);
 __global__ void kmatrix_subtract(Matrix *A, Matrix *B, Matrix *C);
 __global__ void kmatrix_add(Matrix *A, Matrix *B, Matrix *C);
 __global__ void kmultiply_scalar(Matrix *output, Matrix *input, double scale);
 __global__ void kfloor(Matrix *output, Matrix *input);
 __global__ void kmatrix_subdiagonal_writecolumn(Matrix *dest, Matrix *src, int col);
+__global__ void kmatrix_normrandomize(Matrix *A, curandState_t *rs);
+__global__ void krandom_init(long long seed, curandState_t *rs);
+
+curandState_t *random_state;
+void matrix_normrandomize(Matrix *A)
+{
+  int cols = A->GetNumCols();
+  int rows = A->GetNumRows();
+
+  int num_blocks = (rows * cols + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+
+  cudaMalloc((void **) &random_state, sizeof(curandState_t) * cols * rows);
+  krandom_init<<<num_blocks, THREADS_PER_BLOCK>>>((long long)std::rand(), random_state);
+  kmatrix_normrandomize<<<num_blocks, THREADS_PER_BLOCK>>>(A, random_state);
+  cudaDeviceSynchronize();
+}
 
 void matrix_subdiagonal_writecolumn(Matrix *dest, Matrix *src, int col)
 {
   int num_blocks = (dest->GetNumRows() - col - 1 + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
   kmatrix_subdiagonal_writecolumn<<<num_blocks, THREADS_PER_BLOCK>>>(dest, src, col);
+  cudaDeviceSynchronize(); 
+}
+
+void matrix_colswap(Matrix *A, int col1, int col2)
+{
+  int num_blocks = (A->GetNumRows() + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+  kmatrix_colswap<<<num_blocks, THREADS_PER_BLOCK>>>(A, col1, col2);
   cudaDeviceSynchronize(); 
 }
 
@@ -369,6 +395,18 @@ __global__ void kmatrix_subdiagonal_writecolumn(Matrix *dest, Matrix *src, int c
   }
 }
 
+__global__ void kmatrix_colswap(Matrix *A, int col1, int col2)
+{
+  int idx = threadIdx.x + blockIdx.x * blockDim.x;
+  bool past_length = idx < A->GetNumRows() ? false : true;
+
+  if (!past_length)
+  {
+    double temp = (*A)[idx][col1];
+    (*A)[idx][col1] = (*A)[idx][col2];
+    (*A)[idx][col2] = temp;
+  }
+}
 __global__ void kmatrix_rowswap(Matrix *A, int row1, int row2)
 {
   int idx = threadIdx.x + blockIdx.x * blockDim.x;
@@ -639,6 +677,23 @@ __global__ void kmatrix_multiply_mapsums(Matrix *A, Matrix *B, double *result)
     int depth = idx % (A->GetNumCols());
 
     result[idx] = (*A)[row][depth] * (*B)[depth][col];
+  }
+}
+
+__global__ void krandom_init(long long seed, curandState_t *random_state)
+{
+  int idx = threadIdx.x + blockIdx.x * blockDim.x;
+  curand_init(seed, idx, 0, &random_state[idx]);
+}
+
+__global__ void kmatrix_normrandomize(Matrix *A, curandState_t *random_state)
+{ 
+ 	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	bool past_length = idx < A->GetNumRows() * A->GetNumCols() ? false : true;
+
+  if (!past_length)
+  {
+    A->GetFlattened()[idx] = curand_normal(&random_state[idx]);
   }
 }
 

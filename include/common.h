@@ -27,6 +27,8 @@ double reduce(double *data, int length, Reduction op_type);
 
 double reduce_absmaxidx(double *data, int length, int *idx);
 
+void matrix_normrandomize(Matrix *A);
+
 // matrix_transpose
 //
 // Computes matrix transpose in parallel
@@ -60,6 +62,8 @@ void matrix_slicecolumn(Matrix *A, double *slice, int col_idx);
 void matrix_copy(Matrix *dest, Matrix *src);
 
 void matrix_rowswap(Matrix *A, int row1, int row2);
+
+void matrix_colswap(Matrix *A, int col1, int col2);
 
 void matrix_subdiagonal_rowswap(Matrix *A, int row1, int row2);
 

@@ -27,6 +27,14 @@ int lu_decomposition_run(int argc, Matrix **argv);
 
 int lu_decomposition_verify(int argc, Matrix **argv);
 
+int lu_columndecomposition_run(int argc, Matrix **argv);
+
+int lu_columndecomposition_verify(int argc, Matrix **argv);
+
+int lu_randomizeddecomposition_run(int argc, Matrix **argv);
+
+int lu_randomizeddecomposition_verify(int argc, Matrix **argv);
+
 int lu_blockeddecomposition_run(int argc, Matrix **argv);
 
 int lu_blockeddecomposition_verify(int argc, Matrix **argv);

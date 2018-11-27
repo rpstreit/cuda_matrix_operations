@@ -93,6 +93,110 @@ void lu_decomposition(Matrix *A, Matrix *L, Matrix *U, Matrix *P)
   cudaFree(column_slice);
 }
 
+void lu_columndecomposition(Matrix *A, Matrix *L, Matrix *U, Matrix *Q)
+{
+  if (A->GetNumRows() < A->GetNumCols())
+  {
+    std::cerr << "lu_decomposition: matrix dimensions on A are ill formed for LU Decomposition" << std::endl;
+    exit(EXIT_FAILURE);
+  }
+  if (A->GetNumRows() != L->GetNumRows()
+      || A->GetNumRows() != U->GetNumRows()
+      || A->GetNumCols() != Q->GetNumRows()
+      || A->GetNumCols() != U->GetNumCols()
+      || L->GetNumRows() != L->GetNumCols()
+      || Q->GetNumRows() != Q->GetNumCols())
+  {
+    std::cerr << "lu_decomposition: matrix dimensions of inputs are mismatched" << std::endl;
+    exit(EXIT_FAILURE);
+  }
+  Q->ToIdentity();
+  L->ToIdentity();
+  matrix_copy(U, A);
+  int rows = A->GetNumRows();
+  int cols = A->GetNumCols();
+
+  Matrix *U_intermediate = new Matrix(A->GetNumRows(), A->GetNumCols());
+  Matrix *E = new Matrix(L->GetNumRows(), L->GetNumCols());
+  Matrix *L_intermediate = new Matrix(L->GetNumRows(), L->GetNumCols());
+
+  for (int i = 0; i < cols - 1; i++)
+  {
+    int idx;
+    double max = reduce_absmaxidx(&(U->GetFlattened()[i * U->GetNumCols() + i]), cols - i, &idx); // O(log(rows - i)) <= O(log(rows))
+    idx = idx + i;
+
+    std::cout << "MAX idx: " << idx << std::endl;
+    if (i != idx)
+    {
+      matrix_colswap(Q, i, idx); // O(1)
+      matrix_colswap(U, i, idx);
+//      matrix_subdiagonal_colswap(L, i, idx);
+    }
+
+    // I reuse pointers in ways that don't match the names below
+    // just to save on copies
+    // Update U
+    matrix_getelementarymatrix(U, E, i);
+    matrix_multiply(E, U, U_intermediate);
+    matrix_copy(U, U_intermediate);
+
+    // Update L
+    matrix_invertelementarymatrix(E, L_intermediate, i);
+    matrix_subdiagonal_writecolumn(L, L_intermediate, i);
+  }
+  
+  delete U_intermediate;
+  delete L_intermediate;
+}
+//void lu_decomposition(Matrix *A, Matrix *L, Matrix *U, Matrix *P)
+void lu_randomizeddecomposition(Matrix *A, Matrix *L, Matrix *U, Matrix *P, Matrix *Q, int l, int k)
+{
+  Matrix *G = new Matrix(A->GetNumCols(), l);
+  Matrix *Y = new Matrix(A->GetNumRows(), l);
+  
+  matrix_normrandomize(G);
+  matrix_multiply(A, G, Y);
+  delete G;
+  
+  Matrix *L_y = new Matrix(Y->GetNumRows(), Y->GetNumRows());
+  Matrix *U_y = new Matrix(Y->GetNumRows(), Y->GetNumCols());
+  lu_decomposition(Y, L_y, U_y, P); 
+  delete Y;
+
+  Matrix *L_y_truncated = new Matrix(L_y->GetNumRows(), k);
+//  Matrix *U_y_truncated = new Matrix(k, U_y->GetNumCols());
+  matrix_sliceblock(L_y, L_y_truncated, BlockLoc::UPPERLEFT);
+//  matrix_sliceblock(U_y, U_y_truncated, BlockLoc::TOPLEFT);
+  delete U_y;
+  delete L_y;
+
+  Matrix *L_y_t = new Matrix(L_y_truncated->GetNumCols(), L_y_truncated->GetNumRows());
+  matrix_transpose(L_y_truncated, L_y_t);
+  Matrix *L_y_innerproduct = new Matrix(L_y_truncated->GetNumCols(), L_y_truncated->GetNumCols());
+  matrix_multiply(L_y_t, L_y_truncated, L_y_innerproduct);
+  GJE_inverse(L_y_innerproduct);
+  Matrix *L_y_psuedoinverse = new Matrix(L_y_truncated->GetNumCols(), L_y_truncated->GetNumRows());
+  matrix_multiply(L_y_innerproduct, L_y_t, L_y_psuedoinverse);
+  delete L_y_t;
+  delete L_y_innerproduct;
+
+  Matrix *B = new Matrix(L_y_psuedoinverse->GetNumRows(), A->GetNumCols());
+  Matrix *inter = new Matrix(L_y_psuedoinverse->GetNumRows(), P->GetNumCols());
+  matrix_multiply(L_y_psuedoinverse, P, inter);
+  matrix_multiply(inter, A, B);
+  delete L_y_psuedoinverse;
+  delete inter;
+
+  Matrix *L_b = new Matrix(B->GetNumRows(), U->GetNumCols());
+  lu_columndecomposition(B, L_b, U, Q);
+  
+  matrix_multiply(L_y_truncated, L_b, L);
+
+  delete L_y_truncated;
+  delete L_b;
+}
+
 void lu_blockeddecomposition(Matrix *A, Matrix *L, Matrix *U, Matrix *P, int r)
 {
   if (A->GetNumCols() < r)
