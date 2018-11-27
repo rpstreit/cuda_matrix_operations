@@ -11,6 +11,8 @@ LINEAR_SOLVER_TESTS_b=(linear_2x1a.txt linear_3x1a.txt linear_5x1a.txt linear_25
 
 GJE_INVERSE_TESTS=(linear_2x2a.txt invert_3x3.txt invert_5x5.txt invert_10x10.txt invert_25x25.txt)
 
+DETERMINANT_TESTS=(simple_2x2.txt simple_3x3.txt simple_4x4.txt simple_5x5.txt simple_6x6.txt simple_7x7.txt simple_8x8.txt simple_9x9.txt)
+
 make
 
 function run_test {
@@ -50,7 +52,7 @@ function echo_header {
 
 # LU Decomposition
 
- for idx in "${!LU_DECOMP_TESTS[@]}"; do
+for idx in "${!LU_DECOMP_TESTS[@]}"; do
   input=${LU_DECOMP_TESTS["$idx"]}
   verify lu_decomposition $input
 done
@@ -71,41 +73,57 @@ fi
 
 # Linear System
 
-echo_header "Steepest Descent Linear Solver"
-for idx in "${!LINEAR_SOLVER_TESTS_A[@]}"; do
-  inputA=${LINEAR_SOLVER_TESTS_A["$idx"]}
-  inputb=${LINEAR_SOLVER_TESTS_b["$idx"]}
-  verify steepest_descent $inputA $inputb
-done
-
-echo_header "Conjugate Direction Linear Solver"
-for idx in "${!LINEAR_SOLVER_TESTS_A[@]}"; do
-  inputA=${LINEAR_SOLVER_TESTS_A["$idx"]}
-  inputb=${LINEAR_SOLVER_TESTS_b["$idx"]}
-  verify conjugate_direction $inputA $inputb
-done
-
-echo_header "Inverse Linear Solver"
-for idx in {0...4}; do
-  inputA=${LINEAR_SOLVER_TESTS_A["$idx"]}
-  inputb=${LINEAR_SOLVER_TESTS_b["$idx"]}
-  verify inverse_linear_solver $inputA $inputb
-done
-
-echo ""
-if [ "$ALL_PASS" = true ]; then
-  echo "All Tests Passed"
-else
-  echo "Some tests failed. See log for details"
-fi
+#echo_header "Steepest Descent Linear Solver"
+#for idx in "${!LINEAR_SOLVER_TESTS_A[@]}"; do
+#  inputA=${LINEAR_SOLVER_TESTS_A["$idx"]}
+#  inputb=${LINEAR_SOLVER_TESTS_b["$idx"]}
+#  verify steepest_descent $inputA $inputb
+#done
+#
+#echo_header "Conjugate Direction Linear Solver"
+#for idx in "${!LINEAR_SOLVER_TESTS_A[@]}"; do
+#  inputA=${LINEAR_SOLVER_TESTS_A["$idx"]}
+#  inputb=${LINEAR_SOLVER_TESTS_b["$idx"]}
+#  verify conjugate_direction $inputA $inputb
+#done
+#
+#echo_header "Inverse Linear Solver"
+#for idx in {0...4}; do
+#  inputA=${LINEAR_SOLVER_TESTS_A["$idx"]}
+#  inputb=${LINEAR_SOLVER_TESTS_b["$idx"]}
+#  verify inverse_linear_solver $inputA $inputb
+#done
+#
+#echo ""
+#if [ "$ALL_PASS" = true ]; then
+#  echo "All Tests Passed"
+#else
+#  echo "Some tests failed. See log for details"
+#fi
 
 
 # GJE Inverse
 
-echo_header "GJE Inverse"
-for idx in {0...4}; do
-  input=${GJE_INVERSE_TESTS["$idx"]}
-  verify inverse_linear_solver $input
+#echo_header "GJE Inverse"
+#for idx in {0...4}; do
+#  input=${GJE_INVERSE_TESTS["$idx"]}
+#  verify inverse_linear_solver $input
+#done
+#
+#echo ""
+#if [ "$ALL_PASS" = true ]; then
+#  echo "All Tests Passed"
+#else
+#  echo "Some tests failed. See log for details"
+#fi
+
+
+# Determinant 
+
+echo_header "DETERMINANT"
+for idx in "${!DETERMINANT_TESTS[@]}"; do
+  input=${DETERMINANT_TESTS["$idx"]}
+  verify determinant_lu $input
 done
 
 echo ""
