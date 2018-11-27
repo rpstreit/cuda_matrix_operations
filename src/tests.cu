@@ -247,7 +247,7 @@ int steepest_descent_run(int argc, Matrix **argv)
 {
   if(argc != 2)
   {
-    std::cerr << "error: lu decomposition requires 1 argument" << std::endl;
+    std::cerr << "error: steepest descent requires 2 arguments" << std::endl;
   }
   Matrix * A_operator = argv[0];
   matrix_print(A_operator);
@@ -284,7 +284,7 @@ int conjugate_direction_run(int argc, Matrix **argv)
 int inverse_linear_run(int argc, Matrix **argv) {
   if(argc != 2)
   {
-    std::cerr << "error: Inverse Linear System Solver requires e arguments" << std::endl;
+    std::cerr << "error: Inverse Linear System Solver requires 2 arguments" << std::endl;
   }
   
   Matrix * A_operator = argv[0];
@@ -477,7 +477,7 @@ int inverse_verify(int argc, Matrix **argv)
 int inverse_linear_verify (int argc, Matrix **argv) {
   if(argc != 2)
   {
-    std::cerr << "error: Inverse Linear System Solver requires e arguments" << std::endl;
+    std::cerr << "error: Inverse Linear System Solver requires 2 arguments" << std::endl;
   }
 
   Matrix * A_operator = argv[0];
