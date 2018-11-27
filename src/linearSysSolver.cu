@@ -97,7 +97,6 @@ Matrix * steepestDescent(Matrix *A_operator, Matrix *b_operator) {
     std::cout << "Steepest Descent took " << elapsed_time << "ms"<< std::endl;
 
 
-    delete x0;
     delete d_vector;
     delete A_xk_1;
     delete A_dk_1;

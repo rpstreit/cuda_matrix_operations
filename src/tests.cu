@@ -12,6 +12,8 @@
 #include "determinant.h"
 #include "matrix_inverse.h"
 
+#define DBL_EPSILON 2.2204460492503131e-16
+
 int matmul_run(int argc, Matrix **argv) 
 {
   if (argc != 2)
@@ -326,7 +328,7 @@ int steepest_descent_run(int argc, Matrix **argv)
 {
   if(argc != 2)
   {
-    std::cerr << "error: lu decomposition requires 1 argument" << std::endl;
+    std::cerr << "error: steepest descent requires 2 arguments" << std::endl;
   }
   Matrix * A_operator = argv[0];
   matrix_print(A_operator);
@@ -363,7 +365,7 @@ int conjugate_direction_run(int argc, Matrix **argv)
 int inverse_linear_run(int argc, Matrix **argv) {
   if(argc != 2)
   {
-    std::cerr << "error: Inverse Linear System Solver requires e arguments" << std::endl;
+    std::cerr << "error: Inverse Linear System Solver requires 2 arguments" << std::endl;
   }
   
   Matrix * A_operator = argv[0];
@@ -393,7 +395,7 @@ int determinant_recur_run(int argc, Matrix **argv)
   cudaEventCreate(&stop);
   cudaEventRecord(start);
 
-  int determinant = determinant_recur(A_operator);
+  double determinant = ceil(determinant_recur(A_operator));
   std::cout << "determinant: " << determinant << std::endl;
 
   cudaEventRecord(stop);
@@ -403,8 +405,7 @@ int determinant_recur_run(int argc, Matrix **argv)
 
   std::cout << "determinant_recur took : " << elapsed_time << " ms" << std::endl;
 
-  //delete A_operator;
-  return 0;
+  return 0; 
 }
 
 int determinant_lu_run(int argc, Matrix **argv)
@@ -421,8 +422,9 @@ int determinant_lu_run(int argc, Matrix **argv)
   cudaEventCreate(&stop);
   cudaEventRecord(start);
 
-  int determinant = determinant_lu(A_operator);
+  double determinant = determinant_lu(A_operator);
   std::cout << "determinant: " << determinant << std::endl;
+  printf("%f", determinant);
 
   cudaEventRecord(stop);
   cudaEventSynchronize(stop);
@@ -431,7 +433,6 @@ int determinant_lu_run(int argc, Matrix **argv)
 
   std::cout << "determinant_recur took : " << elapsed_time << " ms" << std::endl;
 
-  //delete A_operator;
   return 0;
 }
 
@@ -493,11 +494,11 @@ int determinant_verify(int argc, Matrix **argv)
   Matrix * A_operator = argv[0];
   matrix_print(A_operator);
 
-  int recur_ans = determinant_recur(A_operator);
-  int lu_ans = determinant_recur(A_operator);  
+  double recur_ans = ceil(determinant_recur(A_operator));
+  double lu_ans = determinant_lu(A_operator);  
 
   std::cout << "recursive: " << recur_ans << " lu: " << lu_ans << std::endl; 
-  if (recur_ans == lu_ans)
+  if (std::fabs(recur_ans - lu_ans) < DBL_EPSILON)
   {
     return 0;
   }
@@ -556,7 +557,7 @@ int inverse_verify(int argc, Matrix **argv)
 int inverse_linear_verify (int argc, Matrix **argv) {
   if(argc != 2)
   {
-    std::cerr << "error: Inverse Linear System Solver requires e arguments" << std::endl;
+    std::cerr << "error: Inverse Linear System Solver requires 2 arguments" << std::endl;
   }
 
   Matrix * A_operator = argv[0];
