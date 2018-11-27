@@ -97,14 +97,6 @@ for idx in {0..3}; do
   verify inverse_linear_solver $inputA $inputb
 done
 
-echo ""
-if [ "$ALL_PASS" = true ]; then
-  echo "All Tests Passed"
-else
-  echo "Some tests failed. See log for details"
-fi
-
-
 # Determinant 
 
 echo_header "DETERMINANT"
