@@ -50,6 +50,7 @@ function echo_header {
 
 # LU Decomposition
 
+echo_header "LU DECOMPOSITION"
 for idx in "${!LU_DECOMP_TESTS[@]}"; do
   input=${LU_DECOMP_TESTS["$idx"]}
   verify lu_decomposition $input
