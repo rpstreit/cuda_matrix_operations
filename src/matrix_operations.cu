@@ -201,6 +201,18 @@ void matrix_multiply(Matrix *A, Matrix *B, Matrix *result)
       || B->GetNumCols() != result->GetNumCols())
   {
     std::cerr << "error: matrix_multiply input/output dimensions are inconsistent" << std::endl;
+    if (A->GetNumCols() != B->GetNumRows())
+    {
+      std::cout << "A->GetNumCols() != B->GetNumRows()" << std::endl;
+    }
+    if (A->GetNumRows() != result->GetNumRows())
+    {
+      std::cout << "A->GetNumRows() != result->GetNumRows()" << std::endl;
+    }
+    if (B->GetNumCols() != result->GetNumCols())
+    {
+      std::cout << "B->GetNumCols() != result->GetNumCols()" << std::endl;
+    }
     exit(EXIT_FAILURE);
   }
   double *inter1, *inter2;
@@ -273,6 +285,8 @@ cudaDeviceSynchronize();
 
   cudaFree(inter2);
   cudaFree(inter1);
+
+  cudaDeviceSynchronize();
 }
 
 void matrix_print(Matrix *A)
@@ -700,7 +714,7 @@ __global__ void kmatrix_normrandomize(Matrix *A, curandState_t *random_state)
 __global__ void kmatrix_copy(Matrix *dest, Matrix *src)
 {
  	int idx = threadIdx.x + blockIdx.x * blockDim.x;
-	bool past_length = idx < dest->GetNumRows() * dest->GetNumCols() ? false : true;
+	bool past_length = idx < src->GetNumRows() * src->GetNumCols() ? false : true;
 
   if (!past_length)
   {
