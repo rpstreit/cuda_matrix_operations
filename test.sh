@@ -17,7 +17,6 @@ GJE_INVERSE_TESTS=(linear_2x2a.txt invert_3x3.txt invert_5x5.txt invert_10x10.tx
 
 DETERMINANT_TESTS=(simple_2x2.txt simple_3x3.txt simple_4x4.txt simple_5x5.txt simple_6x6.txt simple_7x7.txt simple_8x8.txt simple_9x9.txt)
 
-make CCFLAGS=-DDEFAULTRANDOMA
 
 function run_test {
   #
