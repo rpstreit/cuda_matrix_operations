@@ -6,7 +6,7 @@
 NVCC=nvcc
 BIN=bin
 OBJ=obj
-CFLAGS=-dc -g 
+CFLAGS=-dc -g $(CCFLAGS)
 LDFLAGS=
 SOURCE_DIR=src
 INCLUDE_DIR=include

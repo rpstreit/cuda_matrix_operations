@@ -177,10 +177,10 @@ void lu_randomizeddecomposition(Matrix *A, Matrix *L, Matrix *U, Matrix *P, Matr
     std::cerr << "keeping only 1 singular value ain't gonna work" << std::endl;
     exit(EXIT_FAILURE);
   }
-  if (A->GetNumRows() < A->GetNumCols())
+  if (A->GetNumRows() != A->GetNumCols())
   {
     matrix_print(A);
-    std::cerr << "lu_decomposition: matrix dimensions on A are ill formed for LU Decomposition" << std::endl;
+    std::cerr << "lu_decomposition: matrix dimensions on A are ill formed for LU Decomposition with complete pivoting" << std::endl;
     exit(EXIT_FAILURE);
   }
   if (A->GetNumRows() != L->GetNumRows()
@@ -220,10 +220,10 @@ void lu_randomizeddecomposition(Matrix *A, Matrix *L, Matrix *U, Matrix *P, Matr
 
   Matrix *L_y_truncated = new Matrix(L_y->GetNumRows(), k);
 //  Matrix *U_y_truncated = new Matrix(k, U_y->GetNumCols());
-  matrix_sliceblock(L_y, L_y_truncated, BlockLoc::UPPERLEFT);
+  matrix_sliceblock(L_y, L_y_truncated, UPPERLEFT);
 //  std::cout << "L_y_truncated" << std::endl;
 //  matrix_print(L_y_truncated);
-//  matrix_sliceblock(U_y, U_y_truncated, BlockLoc::TOPLEFT);
+//  matrix_sliceblock(U_y, U_y_truncated, TOPLEFT);
   delete U_y;
   delete L_y;
 
@@ -254,14 +254,14 @@ void lu_randomizeddecomposition(Matrix *A, Matrix *L, Matrix *U, Matrix *P, Matr
  
   Matrix *L_b_extended = new Matrix(L_b->GetNumRows(), A->GetNumCols());
   L_b_extended->ToIdentity();
-  matrix_writeblock(L_b_extended, L_b, BlockLoc::UPPERLEFT);
+  matrix_writeblock(L_b_extended, L_b, UPPERLEFT);
   matrix_multiply(L_y_truncated, L_b_extended, L);
   int num_blocks = (L->GetNumCols() + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
   kfix_diagonal<<<num_blocks, THREADS_PER_BLOCK>>>(L);
   cudaDeviceSynchronize();
   
   U->ToZeroes();
-  matrix_writeblock(U, U_b, BlockLoc::UPPERLEFT);
+  matrix_writeblock(U, U_b, UPPERLEFT);
 
   delete L_y_truncated;
   delete L_b;
@@ -370,20 +370,20 @@ void lu_blockeddecomposition(Matrix *A, Matrix *L, Matrix *U, Matrix *P, int r)
     	matrix_subdiagonal_writecolumn(L_loop, E_loop_invert, j);
 		}
 
-    matrix_sliceblock(L_loop, L_tl, BlockLoc::UPPERLEFT);
+    matrix_sliceblock(L_loop, L_tl, UPPERLEFT);
     if (L_bl->GetNumRows() > 0)
     {
-      matrix_sliceblock(L_loop, L_bl, BlockLoc::BOTTOMLEFT);
+      matrix_sliceblock(L_loop, L_bl, BOTTOMLEFT);
       matrix_writeblock(L, L_bl, r + i, i);
     }
-    //matrix_sliceblock(A_loop, U_tr, BlockLoc::UPPERRIGHT);
-    matrix_sliceblock(A_loop, U_tl, BlockLoc::UPPERLEFT);
+    //matrix_sliceblock(A_loop, U_tr, UPPERRIGHT);
+    matrix_sliceblock(A_loop, U_tl, UPPERLEFT);
 //    std::cout << "\nA_copy" << std::endl;
 //    matrix_print(A_copy);
 //    std::cout << "\nA_tr" << std::endl;
 //    matrix_print(A_tr);
-    //matrix_writeblock(A_copy, A_loop, BlockLoc::BOTTOMRIGHT);
-//		matrix_writeblock(P, P_loop, BlockLoc::BOTTOMRIGHT);
+    //matrix_writeblock(A_copy, A_loop, BOTTOMRIGHT);
+//		matrix_writeblock(P, P_loop, BOTTOMRIGHT);
 
 		A_loop->ShrinkNumRows(A->GetNumRows() - (i + r));
 		A_loop->ShrinkNumCols(A->GetNumCols() - (i + r));
@@ -398,7 +398,7 @@ void lu_blockeddecomposition(Matrix *A, Matrix *L, Matrix *U, Matrix *P, int r)
 		E_loop_invert->ShrinkNumRows(A->GetNumRows() - (i + r));
 		E_loop_invert->ShrinkNumCols(A->GetNumRows() - (i + r));
 		
-//    matrix_sliceblock(P, P_loop, BlockLoc::BOTTOMRIGHT);
+//    matrix_sliceblock(P, P_loop, BOTTOMRIGHT);
 		matrix_writeblock(U, U_tl, i, i);
 //    std::cout << "\nBefore L_tl update L_tl:" << std::endl;
 //    matrix_print(L_tl);
@@ -410,7 +410,7 @@ void lu_blockeddecomposition(Matrix *A, Matrix *L, Matrix *U, Matrix *P, int r)
     
     if (A_tr->GetNumCols() > 0)
     {
-      matrix_sliceblock(A_copy, A_loop, BlockLoc::BOTTOMRIGHT);
+      matrix_sliceblock(A_copy, A_loop, BOTTOMRIGHT);
 		  matrix_sliceblock(A_copy, A_tr, i, i + r);
       GJE_inverse(L_tl);
 //      std::cout << "\ninverse of L_tl" << std::endl;
@@ -429,7 +429,7 @@ void lu_blockeddecomposition(Matrix *A, Matrix *L, Matrix *U, Matrix *P, int r)
 //      matrix_print(A_loop);
 //      std::cout << "\nBefore write A_copy" << std::endl;
 //      matrix_print(A_copy);
-      matrix_writeblock(A_copy, A_loop, BlockLoc::BOTTOMRIGHT);
+      matrix_writeblock(A_copy, A_loop, BOTTOMRIGHT);
 //      std::cout << "\nAfter A_copy" << std::endl;
 //      matrix_print(A_copy);
       matrix_writeblock(U, U_tr, i, r + i);
