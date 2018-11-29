@@ -95,6 +95,8 @@ int lu_randomizeddecomposition_run(int argc, Matrix **argv)
   Matrix *L = new Matrix(A->GetNumRows(), A->GetNumRows());
   Matrix *U = new Matrix(A->GetNumRows(), A->GetNumCols());
   Matrix *Q = new Matrix(A->GetNumCols(), A->GetNumCols());
+  Matrix *left = new Matrix(A->GetNumRows(), A->GetNumCols());
+  Matrix *right = new Matrix(A->GetNumRows(), A->GetNumCols());
 
 //  int l = (int)std::sqrt((double)A->GetNumCols());
 //  int k = l * ((int)std::sqrt((double)l));
@@ -102,7 +104,7 @@ int lu_randomizeddecomposition_run(int argc, Matrix **argv)
   int l = A->GetNumCols();
   int k = A->GetNumCols();
 #else
-  int l = A->GetNumCols();//10 * 7;
+  int l = (int)(((double)A->GetNumCols()/10.f) * 9.f);
   int k = l;
 #endif
 
@@ -120,6 +122,10 @@ int lu_randomizeddecomposition_run(int argc, Matrix **argv)
   float elapsed_time;
   cudaEventElapsedTime(&elapsed_time, start, stop);
 
+  matrix_multiply_cpu(P, A, left);
+  matrix_multiply_cpu(left, Q, A);
+  matrix_copy(left, A);
+  matrix_multiply_cpu(L, U, right);
   std::cout << "\nP =" << std::endl;
   matrix_print(P);
   std::cout << "\nQ =" << std::endl;
@@ -128,6 +134,10 @@ int lu_randomizeddecomposition_run(int argc, Matrix **argv)
   matrix_print(L);
   std::cout << "\nU =" << std::endl;
   matrix_print(U);
+  std::cout << "\nPAQ = " << std::endl;
+  matrix_print(left);
+  std::cout << "\nLU = " << std::endl;
+  matrix_print(right);
   std::cout << "k, l = " << k << ", " << l << std::endl;
   std::cout << "completed in " << elapsed_time << "ms" << std::endl;
 
@@ -135,6 +145,8 @@ int lu_randomizeddecomposition_run(int argc, Matrix **argv)
   delete Q;
   delete L;
   delete U;
+  delete left;
+  delete right;
 
   return 0;
 }
@@ -222,6 +234,13 @@ int lu_blockeddecomposition_run(int argc, Matrix **argv)
   matrix_print(L);
   std::cout << "\nU =" << std::endl;
   matrix_print(U);
+  matrix_multiply_cpu(P, A, left);
+  matrix_multiply_cpu(L, U, right);
+
+  std::cout << "\nPA = " << std::endl;
+  matrix_print(left);
+  std::cout << "\nLU = " << std::endl;
+  matrix_print(right);
   std::cout << "completed in " << elapsed_time << "ms" << std::endl;
 
   delete P;
@@ -384,6 +403,13 @@ int lu_decomposition_run(int argc, Matrix **argv)
   matrix_print(L);
   std::cout << "\nU =" << std::endl;
   matrix_print(U);
+  matrix_multiply_cpu(P, A, left);
+  matrix_multiply_cpu(L, U, right);
+
+  std::cout << "\nPA = " << std::endl;
+  matrix_print(left);
+  std::cout << "\nLU = " << std::endl;
+  matrix_print(right);
   std::cout << "completed in " << elapsed_time << "ms" << std::endl;
 
   delete P;
